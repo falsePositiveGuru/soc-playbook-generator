@@ -11,9 +11,7 @@
   --border:#1e2d4a;--border2:#2a3f6a;
   --text:#e2e8f0;--text2:#94a3b8;--text3:#4a5568;
   --accent:#00d4ff;--accent2:#0099cc;--accent-glow:rgba(0,212,255,0.15);
-  --green:#00ff88;--green-dim:#00cc6a;--green-bg:rgba(0,255,136,0.08);
-  --red:#ff4455;--red-bg:rgba(255,68,85,0.1);
-  --amber:#ffaa00;--amber-bg:rgba(255,170,0,0.1);
+  --green:#00ff88;--red:#ff4455;
   --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --mono:'SF Mono','Fira Code',monospace;
   --radius:8px;--radius-lg:12px;
@@ -37,23 +35,35 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 #export-btn:hover{background:var(--accent-glow);border-color:var(--accent);}
 
 #app{display:flex;flex:1;overflow:hidden;}
-
-#sidebar{width:300px;min-width:260px;border-right:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow-y:auto;}
+#sidebar{width:310px;min-width:270px;border-right:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow-y:auto;}
 .ss{padding:14px 16px;border-bottom:1px solid var(--border);}
 .sl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:8px;font-weight:600;}
+
+/* PROVIDER SELECTOR */
+.provider-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+.prov-btn{padding:8px 6px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;text-align:center;transition:all 0.15s;font-family:var(--font);}
+.prov-btn:hover{border-color:var(--border2);color:var(--text);}
+.prov-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow);}
+.prov-btn .prov-icon{font-size:14px;display:block;margin-bottom:3px;}
+.prov-btn .prov-name{display:block;}
+.prov-btn .prov-free{display:block;font-size:9px;color:var(--green);margin-top:1px;}
+
 .key-row{display:flex;gap:6px;}
 .key-row input{flex:1;padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px;font-family:var(--mono);}
 .key-row input:focus{outline:none;border-color:var(--accent);}
-.key-row button{padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font);}
+.key-row button{padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font);white-space:nowrap;}
 .key-row button:hover{border-color:var(--accent);color:var(--accent);}
 .key-hint{font-size:11px;color:var(--text3);margin-top:5px;}
 .key-hint.saved{color:var(--green);}
+.key-link{font-size:11px;color:var(--accent);margin-top:4px;display:block;text-decoration:none;}
+.key-link:hover{text-decoration:underline;}
+
 textarea#incident{width:100%;resize:vertical;font-family:var(--font);font-size:13px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text);line-height:1.6;min-height:120px;}
 textarea#incident:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
 textarea#incident::placeholder{color:var(--text3);}
 .hint{font-size:11px;color:var(--text3);margin-top:4px;}
 #generate-btn{width:100%;margin-top:10px;padding:10px;border-radius:var(--radius);border:1px solid var(--accent2);background:linear-gradient(135deg,rgba(0,153,204,0.15),rgba(0,212,255,0.08));color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.04em;transition:all 0.2s;font-family:var(--font);}
-#generate-btn:hover:not(:disabled){background:linear-gradient(135deg,rgba(0,153,204,0.25),rgba(0,212,255,0.15));box-shadow:0 0 20px rgba(0,212,255,0.15);}
+#generate-btn:hover:not(:disabled){box-shadow:0 0 20px rgba(0,212,255,0.15);}
 #generate-btn:disabled{opacity:0.5;cursor:not-allowed;}
 
 #active-card{display:none;padding:14px 16px;border-bottom:1px solid var(--border);}
@@ -73,14 +83,13 @@ textarea#incident::placeholder{color:var(--text3);}
 .debug-msg{padding:8px 11px;border-radius:var(--radius);background:var(--bg3);color:var(--text2);font-size:11px;font-family:var(--mono);border:1px solid var(--border);white-space:pre-wrap;line-height:1.6;margin-top:6px;}
 
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-
 #empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;}
 .es-icon{width:80px;height:80px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;position:relative;}
 .es-ring{position:absolute;width:110px;height:110px;border-radius:50%;border:1px solid var(--border);animation:rpulse 2s ease-out infinite;}
 .es-ring2{width:140px;height:140px;animation:rpulse 2s ease-out infinite;animation-delay:1s;}
 @keyframes rpulse{0%{opacity:0.5;transform:scale(0.85)}100%{opacity:0;transform:scale(1)}}
 .es-title{font-size:16px;font-weight:600;color:var(--text2);}
-.es-sub{font-size:13px;color:var(--text3);text-align:center;max-width:300px;line-height:1.6;}
+.es-sub{font-size:13px;color:var(--text3);text-align:center;max-width:320px;line-height:1.6;}
 .es-feats{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
 .es-feat{font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--border);color:var(--text3);background:var(--bg2);}
 
@@ -96,7 +105,6 @@ textarea#incident::placeholder{color:var(--text3);}
 #tabs button{padding:12px 16px;border:none;border-bottom:2px solid transparent;background:none;font-size:12px;font-family:var(--font);color:var(--text3);cursor:pointer;white-space:nowrap;letter-spacing:0.03em;transition:all 0.15s;}
 #tabs button.active{border-bottom-color:var(--accent);color:var(--accent);}
 #tabs button:hover:not(.active){color:var(--text2);}
-
 #content{flex:1;overflow-y:auto;padding:1.5rem;}
 
 .badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:99px;font-weight:600;white-space:nowrap;}
@@ -112,7 +120,6 @@ textarea#incident::placeholder{color:var(--text3);}
 .card-header{padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--border);font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;}
 .card-header .count{font-size:12px;color:var(--text3);font-weight:400;margin-left:auto;}
 .card-body{padding:14px 16px;}
-
 .meta-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .meta-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;min-width:120px;}
 .mc-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:600;}
@@ -121,27 +128,23 @@ textarea#incident::placeholder{color:var(--text3);}
 .tactic-pills{display:flex;flex-wrap:wrap;gap:6px;}
 .tactic-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--border2);color:var(--text2);cursor:pointer;background:var(--bg3);transition:all 0.15s;}
 .tactic-pill:hover{border-color:var(--accent);color:var(--accent);}
-
 .step-num{color:var(--text3);font-family:var(--mono);font-size:11px;min-width:20px;padding-top:2px;}
 .phase-num{width:22px;height:22px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent);flex-shrink:0;}
 .mono-item{padding:8px 12px;background:var(--bg3);border-radius:var(--radius);font-family:var(--mono);font-size:12px;line-height:1.6;margin-bottom:6px;border:1px solid var(--border);color:#7dd3fc;}
 .plain-item{padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.6;color:var(--text2);}
 .plain-item:last-child{border-bottom:none;}
 .arrow{color:var(--accent);margin-right:8px;}
-
 .check-row{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:flex-start;user-select:none;}
 .check-row:last-child{border-bottom:none;}
 .check-box{min-width:16px;height:16px;border-radius:4px;border:1px solid var(--border2);background:var(--bg3);display:flex;align-items:center;justify-content:center;margin-top:2px;flex-shrink:0;transition:all 0.15s;}
 .check-box.checked{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px rgba(0,212,255,0.35);}
 .check-label{font-size:13px;line-height:1.6;color:var(--text2);}
 .check-label.done{text-decoration:line-through;color:var(--text3);}
-
 .rem-row{display:flex;gap:14px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;background:var(--bg2);transition:border-color 0.2s;}
 .rem-row:hover{border-color:var(--border2);}
 .rem-num{min-width:26px;height:26px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;margin-top:1px;}
 .rem-title{font-weight:600;font-size:13px;margin-right:8px;}
 .rem-action{font-size:13px;color:var(--text2);line-height:1.6;margin-top:4px;}
-
 .mitre-card{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:14px;background:var(--bg2);}
 .mitre-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .mitre-id{font-family:var(--mono);font-size:12px;background:var(--bg3);padding:2px 8px;border-radius:4px;color:var(--accent);text-decoration:none;border:1px solid var(--border2);}
@@ -178,13 +181,39 @@ textarea#incident::placeholder{color:var(--text3);}
 
 <div id="app">
   <div id="sidebar">
+
     <div class="ss">
-      <label class="sl">Anthropic API Key</label>
+      <label class="sl">AI Provider</label>
+      <div class="provider-grid">
+        <button class="prov-btn active" onclick="selectProvider('anthropic',this)">
+          <span class="prov-icon">🤖</span>
+          <span class="prov-name">Anthropic</span>
+          <span class="prov-free"></span>
+        </button>
+        <button class="prov-btn" onclick="selectProvider('openai',this)">
+          <span class="prov-icon">⚡</span>
+          <span class="prov-name">OpenAI</span>
+          <span class="prov-free"></span>
+        </button>
+        <button class="prov-btn" onclick="selectProvider('groq',this)">
+          <span class="prov-icon">🚀</span>
+          <span class="prov-name">Groq</span>
+          <span class="prov-free">FREE TIER</span>
+        </button>
+        <button class="prov-btn" onclick="selectProvider('gemini',this)">
+          <span class="prov-icon">✦</span>
+          <span class="prov-name">Gemini</span>
+          <span class="prov-free">FREE TIER</span>
+        </button>
+      </div>
+
+      <label class="sl" id="key-label">API Key</label>
       <div class="key-row">
         <input type="password" id="apikey-input" placeholder="sk-ant-..." />
         <button onclick="saveKey()">Save</button>
       </div>
       <div class="key-hint" id="key-hint">Saved locally · never sent anywhere else</div>
+      <a class="key-link" id="key-link" href="https://console.anthropic.com/" target="_blank">→ Get Anthropic API key</a>
     </div>
 
     <div class="ss">
@@ -228,7 +257,7 @@ textarea#incident::placeholder{color:var(--text3);}
         </svg>
       </div>
       <div class="es-title">No playbook generated yet</div>
-      <div class="es-sub">Enter your API key and describe a security incident to generate a full SOC response playbook</div>
+      <div class="es-sub">Choose an AI provider, enter your API key and describe a security incident to get started</div>
       <div class="es-feats">
         <span class="es-feat">IR Playbook</span>
         <span class="es-feat">SIEM Rules</span>
@@ -256,35 +285,103 @@ textarea#incident::placeholder{color:var(--text3);}
       <button onclick="switchTab('remediation',this)">◆ Remediation</button>
       <button onclick="switchTab('mitre',this)">⬡ MITRE ATT&amp;CK</button>
     </div>
-
     <div id="content"></div>
   </div>
 </div>
 
 <script>
+const PROVIDERS={
+  anthropic:{name:"Anthropic",placeholder:"sk-ant-...",link:"https://console.anthropic.com/",linkText:"Get Anthropic API key",model:"claude-haiku-4-5-20251001"},
+  openai:{name:"OpenAI",placeholder:"sk-...",link:"https://platform.openai.com/api-keys",linkText:"Get OpenAI API key",model:"gpt-4o-mini"},
+  groq:{name:"Groq",placeholder:"gsk_...",link:"https://console.groq.com/keys",linkText:"Get Groq API key (free)",model:"llama-3.3-70b-versatile"},
+  gemini:{name:"Gemini",placeholder:"AIza...",link:"https://aistudio.google.com/app/apikey",linkText:"Get Gemini API key (free)",model:"gemini-1.5-flash"},
+};
+
 const TBG={"Initial Access":"rgba(55,138,221,0.12)","Execution":"rgba(255,170,0,0.1)","Persistence":"rgba(167,139,250,0.1)","Privilege Escalation":"rgba(255,68,85,0.1)","Defense Evasion":"rgba(236,72,153,0.1)","Credential Access":"rgba(255,170,0,0.1)","Discovery":"rgba(0,255,136,0.08)","Lateral Movement":"rgba(255,68,85,0.1)","Collection":"rgba(55,138,221,0.1)","Exfiltration":"rgba(255,68,85,0.1)","Command and Control":"rgba(167,139,250,0.1)","Impact":"rgba(255,68,85,0.12)"};
 const TCL={"Initial Access":"#7dd3fc","Execution":"#ffbb33","Persistence":"#a78bfa","Privilege Escalation":"#ff6b7a","Defense Evasion":"#f472b6","Credential Access":"#ffbb33","Discovery":"#00ff88","Lateral Movement":"#ff6b7a","Collection":"#7dd3fc","Exfiltration":"#ff6b7a","Command and Control":"#a78bfa","Impact":"#ff6b7a"};
 const SYS=`You are a senior SOC analyst. Given a threat or incident description, output ONLY a JSON object — no markdown, no preamble, no trailing text. Be concise: max 3 steps per phase, max 3 items per array, max 4 MITRE techniques.
 {"severity":"Critical|High|Medium|Low","threat_type":"Short category","summary":"2 sentence overview","playbook":[{"phase":"name","steps":["step"]}],"detection":{"siem_rules":["rule"],"soar_actions":["action"],"iocs":["ioc"]},"checklist":[{"category":"Name","items":["item"]}],"remediation":[{"step":1,"title":"Short","action":"Detail","priority":"Immediate|Short-term|Long-term"}],"mitre":[{"tactic":"Name","technique_id":"T1234","technique_name":"Name","description":"1 sentence","mitigations":["M1234 - Name"]}]}`;
 
-let PB=null,apiKey=localStorage.getItem("soc_api_key")||"";
+let PB=null,curProvider="anthropic";
+let apiKeys=JSON.parse(localStorage.getItem("soc_keys")||"{}");
 
 window.onload=function(){
-  if(apiKey){document.getElementById("apikey-input").value=apiKey;setKeySaved();}
+  const saved=localStorage.getItem("soc_provider")||"anthropic";
+  document.querySelectorAll(".prov-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".prov-btn")[["anthropic","openai","groq","gemini"].indexOf(saved)]?.classList.add("active");
+  curProvider=saved;
+  updateProviderUI();
   document.getElementById("incident").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))generate();});
 };
 
-function setKeySaved(){const h=document.getElementById("key-hint");h.textContent="✓ Key saved · secured in local storage";h.className="key-hint saved";}
-function saveKey(){const v=document.getElementById("apikey-input").value.trim();if(!v)return;apiKey=v;localStorage.setItem("soc_api_key",v);setKeySaved();}
+function selectProvider(p,btn){
+  document.querySelectorAll(".prov-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  curProvider=p;
+  localStorage.setItem("soc_provider",p);
+  updateProviderUI();
+}
+
+function updateProviderUI(){
+  const p=PROVIDERS[curProvider];
+  document.getElementById("apikey-input").placeholder=p.placeholder;
+  document.getElementById("apikey-input").value=apiKeys[curProvider]||"";
+  document.getElementById("key-label").textContent=p.name+" API Key";
+  document.getElementById("key-link").href=p.link;
+  document.getElementById("key-link").textContent="→ "+p.linkText;
+  const hint=document.getElementById("key-hint");
+  if(apiKeys[curProvider]){hint.textContent="✓ Key saved · secured in local storage";hint.className="key-hint saved";}
+  else{hint.textContent="Saved locally · never sent anywhere else";hint.className="key-hint";}
+}
+
+function saveKey(){
+  const v=document.getElementById("apikey-input").value.trim();
+  if(!v)return;
+  apiKeys[curProvider]=v;
+  localStorage.setItem("soc_keys",JSON.stringify(apiKeys));
+  const hint=document.getElementById("key-hint");
+  hint.textContent="✓ Key saved · secured in local storage";
+  hint.className="key-hint saved";
+}
+
 function setEx(b){document.getElementById("incident").value=b.textContent.trim();}
 function clrStatus(){document.getElementById("status-box").style.display="none";document.getElementById("err").style.display="none";document.getElementById("dbg").style.display="none";}
 function showErr(m){document.getElementById("status-box").style.display="block";const e=document.getElementById("err");e.style.display="block";e.textContent=m;}
 function showDbg(l){document.getElementById("status-box").style.display="block";const d=document.getElementById("dbg");d.style.display="block";d.textContent=l.join("\n");}
 
+async function callAnthropic(key,inp){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:PROVIDERS.anthropic.model,max_tokens:4000,system:SYS,messages:[{role:"user",content:inp}]})});
+  const data=await res.json();
+  if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
+  return data.content?.find(b=>b.type==="text")?.text||"";
+}
+
+async function callOpenAI(key,inp){
+  const res=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:PROVIDERS.openai.model,max_tokens:4000,messages:[{role:"system",content:SYS},{role:"user",content:inp}]})});
+  const data=await res.json();
+  if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
+  return data.choices?.[0]?.message?.content||"";
+}
+
+async function callGroq(key,inp){
+  const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:PROVIDERS.groq.model,max_tokens:4000,messages:[{role:"system",content:SYS},{role:"user",content:inp}]})});
+  const data=await res.json();
+  if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
+  return data.choices?.[0]?.message?.content||"";
+}
+
+async function callGemini(key,inp){
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${PROVIDERS.gemini.model}:generateContent?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:SYS+"\n\nIncident: "+inp}]}]})});
+  const data=await res.json();
+  if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
+  return data.candidates?.[0]?.content?.parts?.[0]?.text||"";
+}
+
 async function generate(){
   const inp=document.getElementById("incident").value.trim();
   if(!inp)return;
-  if(!apiKey){showErr("Please enter your Anthropic API key above.");return;}
+  const key=apiKeys[curProvider]||document.getElementById("apikey-input").value.trim();
+  if(!key){showErr("Please enter your "+PROVIDERS[curProvider].name+" API key above.");return;}
   clrStatus();PB=null;
   document.getElementById("empty-state").style.display="none";
   document.getElementById("loading-state").style.display="flex";
@@ -296,19 +393,16 @@ async function generate(){
   btn.disabled=true;btn.textContent="Analyzing...";
   const log=[];
   try{
-    log.push("1. Sending request...");
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:4000,system:SYS,messages:[{role:"user",content:inp}]})
-    });
-    log.push("2. Status: "+res.status);
-    const data=await res.json();
-    if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
-    const raw=data.content?.find(b=>b.type==="text")?.text||"";
-    log.push("3. Response: "+raw.length+" chars");
+    log.push("Provider: "+PROVIDERS[curProvider].name);
+    log.push("Sending request...");
+    let raw="";
+    if(curProvider==="anthropic")raw=await callAnthropic(key,inp);
+    else if(curProvider==="openai")raw=await callOpenAI(key,inp);
+    else if(curProvider==="groq")raw=await callGroq(key,inp);
+    else if(curProvider==="gemini")raw=await callGemini(key,inp);
+    log.push("Response: "+raw.length+" chars");
     const m=raw.match(/\{[\s\S]*\}/);
-    if(!m)throw new Error("No JSON found. Raw: "+raw.slice(0,200));
+    if(!m)throw new Error("No JSON found. Raw: "+raw.slice(0,300));
     PB=JSON.parse(m[0]);
     renderPB();
   }catch(e){
@@ -333,63 +427,20 @@ function renderPB(){
   renderTab("summary");
 }
 
-function switchTab(tab,btn){
-  document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");renderTab(tab);
-}
-function switchTabByName(tab){
-  const names=["summary","playbook","detection","checklist","remediation","mitre"];
-  const i=names.indexOf(tab);
-  if(i>=0){document.querySelectorAll("#tabs button").forEach((t,j)=>t.classList.toggle("active",j===i));renderTab(tab);}
-}
-function renderTab(tab){
-  const el=document.getElementById("content");
-  const map={summary:rSum,playbook:rIR,detection:rDet,checklist:rChk,remediation:rRem,mitre:rMitre};
-  el.innerHTML=(map[tab]||rSum)();
-  if(tab==="checklist")attachChk();
-}
+function switchTab(tab,btn){document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");renderTab(tab);}
+function switchTabByName(tab){const names=["summary","playbook","detection","checklist","remediation","mitre"];const i=names.indexOf(tab);if(i>=0){document.querySelectorAll("#tabs button").forEach((t,j)=>t.classList.toggle("active",j===i));renderTab(tab);}}
+function renderTab(tab){const el=document.getElementById("content");const map={summary:rSum,playbook:rIR,detection:rDet,checklist:rChk,remediation:rRem,mitre:rMitre};el.innerHTML=(map[tab]||rSum)();if(tab==="checklist")attachChk();}
 
 function rSum(){
   const pills=(PB.mitre||[]).map(t=>`<span class="tactic-pill" style="background:${TBG[t.tactic]||'rgba(255,255,255,0.04)'};color:${TCL[t.tactic]||'#94a3b8'};border-color:${TCL[t.tactic]||'#2a3f6a'}44" onclick="switchTabByName('mitre')">${t.tactic}</span>`).join("");
-  return`<div class="meta-grid">
-    <div class="meta-card"><div class="mc-label">Severity</div><span class="badge sev-${PB.severity}">${PB.severity}</span></div>
-    <div class="meta-card"><div class="mc-label">Threat type</div><div class="mc-val">${PB.threat_type}</div></div>
-    <div class="meta-card"><div class="mc-label">MITRE tactics</div><div class="mc-val" style="color:var(--accent)">${(PB.mitre||[]).length} mapped</div></div>
-    <div class="meta-card"><div class="mc-label">IR phases</div><div class="mc-val" style="color:var(--green)">${(PB.playbook||[]).length} phases</div></div>
-  </div>
-  <div class="summary-text">${PB.summary}</div>
-  <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">ATT&CK tactics detected</div>
-  <div class="tactic-pills">${pills}</div>`;
+  return`<div class="meta-grid"><div class="meta-card"><div class="mc-label">Severity</div><span class="badge sev-${PB.severity}">${PB.severity}</span></div><div class="meta-card"><div class="mc-label">Threat type</div><div class="mc-val">${PB.threat_type}</div></div><div class="meta-card"><div class="mc-label">MITRE tactics</div><div class="mc-val" style="color:var(--accent)">${(PB.mitre||[]).length} mapped</div></div><div class="meta-card"><div class="mc-label">IR phases</div><div class="mc-val" style="color:var(--green)">${(PB.playbook||[]).length} phases</div></div></div><div class="summary-text">${PB.summary}</div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">ATT&CK tactics detected</div><div class="tactic-pills">${pills}</div>`;
 }
-function rIR(){
-  return(PB.playbook||[]).map((ph,i)=>`<div class="card"><div class="card-header"><span class="phase-num">${i+1}</span>${ph.phase}</div><div class="card-body">${(ph.steps||[]).map((s,j)=>`<div style="display:flex;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.6"><span class="step-num">${String(j+1).padStart(2,"0")}</span><span style="color:var(--text2)">${s}</span></div>`).join("")}</div></div>`).join("");
-}
-function rDet(){
-  return[{k:"siem_rules",l:"SIEM Rules",m:true},{k:"soar_actions",l:"SOAR Actions",m:false},{k:"iocs",l:"Indicators of Compromise",m:true}].map(({k,l,m})=>`<div class="card"><div class="card-header">${l}</div><div class="card-body">${(PB.detection?.[k]||[]).map(i=>m?`<div class="mono-item">${i}</div>`:`<div class="plain-item"><span class="arrow">›</span>${i}</div>`).join("")}</div></div>`).join("");
-}
-function rChk(){
-  return(PB.checklist||[]).map((cat,ci)=>`<div class="card"><div class="card-header">${cat.category}<span class="count" id="cnt-${ci}">0/${(cat.items||[]).length} done</span></div><div class="card-body">${(cat.items||[]).map((item,ii)=>`<div class="check-row" data-ci="${ci}" data-ii="${ii}"><div class="check-box" id="cb-${ci}-${ii}"></div><span class="check-label" id="cl-${ci}-${ii}">${item}</span></div>`).join("")}</div></div>`).join("");
-}
-function attachChk(){
-  document.querySelectorAll(".check-row").forEach(row=>{
-    row.addEventListener("click",()=>{
-      const ci=row.dataset.ci,ii=row.dataset.ii;
-      const box=document.getElementById(`cb-${ci}-${ii}`);
-      const lbl=document.getElementById(`cl-${ci}-${ii}`);
-      const chk=box.classList.toggle("checked");
-      lbl.classList.toggle("done",chk);
-      box.innerHTML=chk?`<svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#0a0e1a" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`:"";
-      const done=document.querySelectorAll(`[data-ci="${ci}"] .check-box.checked`).length;
-      document.getElementById(`cnt-${ci}`).textContent=`${done}/${PB.checklist[ci].items.length} done`;
-    });
-  });
-}
-function rRem(){
-  return(PB.remediation||[]).map(r=>`<div class="rem-row"><div class="rem-num">${r.step}</div><div><div><span class="rem-title">${r.title}</span><span class="badge pri-${r.priority}">${r.priority}</span></div><div class="rem-action">${r.action}</div></div></div>`).join("");
-}
-function rMitre(){
-  return`<div style="font-size:12px;color:var(--text3);margin-bottom:14px">Techniques mapped to the MITRE ATT&CK framework based on the incident</div>`+(PB.mitre||[]).map(t=>`<div class="mitre-card"><div class="mitre-header" style="background:${TBG[t.tactic]||'rgba(255,255,255,0.02)'}"><a class="mitre-id" href="https://attack.mitre.org/techniques/${t.technique_id}" target="_blank">${t.technique_id}</a><span class="mitre-name">${t.technique_name}</span><span class="mitre-tactic" style="color:${TCL[t.tactic]||'#94a3b8'}">${t.tactic}</span></div><div class="mitre-body"><div class="mitre-desc">${t.description}</div>${(t.mitigations||[]).length?`<div class="mit-label">Mitigations</div>${t.mitigations.map(m=>`<div class="mit-row"><span class="arrow">›</span>${m}</div>`).join("")}`:""}</div></div>`).join("");
-}
+function rIR(){return(PB.playbook||[]).map((ph,i)=>`<div class="card"><div class="card-header"><span class="phase-num">${i+1}</span>${ph.phase}</div><div class="card-body">${(ph.steps||[]).map((s,j)=>`<div style="display:flex;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.6"><span class="step-num">${String(j+1).padStart(2,"0")}</span><span style="color:var(--text2)">${s}</span></div>`).join("")}</div></div>`).join("");}
+function rDet(){return[{k:"siem_rules",l:"SIEM Rules",m:true},{k:"soar_actions",l:"SOAR Actions",m:false},{k:"iocs",l:"Indicators of Compromise",m:true}].map(({k,l,m})=>`<div class="card"><div class="card-header">${l}</div><div class="card-body">${(PB.detection?.[k]||[]).map(i=>m?`<div class="mono-item">${i}</div>`:`<div class="plain-item"><span class="arrow">›</span>${i}</div>`).join("")}</div></div>`).join("");}
+function rChk(){return(PB.checklist||[]).map((cat,ci)=>`<div class="card"><div class="card-header">${cat.category}<span class="count" id="cnt-${ci}">0/${(cat.items||[]).length} done</span></div><div class="card-body">${(cat.items||[]).map((item,ii)=>`<div class="check-row" data-ci="${ci}" data-ii="${ii}"><div class="check-box" id="cb-${ci}-${ii}"></div><span class="check-label" id="cl-${ci}-${ii}">${item}</span></div>`).join("")}</div></div>`).join("");}
+function attachChk(){document.querySelectorAll(".check-row").forEach(row=>{row.addEventListener("click",()=>{const ci=row.dataset.ci,ii=row.dataset.ii;const box=document.getElementById(`cb-${ci}-${ii}`);const lbl=document.getElementById(`cl-${ci}-${ii}`);const chk=box.classList.toggle("checked");lbl.classList.toggle("done",chk);box.innerHTML=chk?`<svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#0a0e1a" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`:"";const done=document.querySelectorAll(`[data-ci="${ci}"] .check-box.checked`).length;document.getElementById(`cnt-${ci}`).textContent=`${done}/${PB.checklist[ci].items.length} done`;});});}
+function rRem(){return(PB.remediation||[]).map(r=>`<div class="rem-row"><div class="rem-num">${r.step}</div><div><div><span class="rem-title">${r.title}</span><span class="badge pri-${r.priority}">${r.priority}</span></div><div class="rem-action">${r.action}</div></div></div>`).join("");}
+function rMitre(){return`<div style="font-size:12px;color:var(--text3);margin-bottom:14px">Techniques mapped to the MITRE ATT&CK framework based on the incident</div>`+(PB.mitre||[]).map(t=>`<div class="mitre-card"><div class="mitre-header" style="background:${TBG[t.tactic]||'rgba(255,255,255,0.02)'}"><a class="mitre-id" href="https://attack.mitre.org/techniques/${t.technique_id}" target="_blank">${t.technique_id}</a><span class="mitre-name">${t.technique_name}</span><span class="mitre-tactic" style="color:${TCL[t.tactic]||'#94a3b8'}">${t.tactic}</span></div><div class="mitre-body"><div class="mitre-desc">${t.description}</div>${(t.mitigations||[]).length?`<div class="mit-label">Mitigations</div>${t.mitigations.map(m=>`<div class="mit-row"><span class="arrow">›</span>${m}</div>`).join("")}`:""}</div></div>`).join("");}
 
 function exportPDF(){
   if(!PB)return;
@@ -402,9 +453,9 @@ function exportPDF(){
     <div><div style="font-size:20px;font-weight:700">SOC Incident Playbook</div><div style="font-size:13px;color:#4a5568;margin-top:3px">${PB.threat_type} · ${new Date().toLocaleDateString()}</div></div>
     <span style="margin-left:auto;padding:4px 14px;border-radius:99px;background:${SB[PB.severity]};color:${SC[PB.severity]};font-weight:700;font-size:12px">${PB.severity}</span>
   </div>
-  <div style="background:#0f1524;border:1px solid #1e2d4a;border-left:3px solid #00d4ff;border-radius:8px;padding:14px;font-size:14px;line-height:1.7;color:#94a3b8">${PB.summary}</div>
-  <h2>Incident Response Playbook</h2>${(PB.playbook||[]).map(ph=>`<div class="c"><div class="ch">${ph.phase}</div><div class="cb">${(ph.steps||[]).map((s,i)=>`<div style="display:flex;gap:8px;margin-bottom:8px"><span style="color:#4a5568;font-family:monospace;font-size:11px;min-width:18px">${String(i+1).padStart(2,"0")}</span><span style="font-size:13px;color:#94a3b8">${s}</span></div>`).join("")}</div></div>`).join("")}
-  <h2>Detection Rules</h2>${["siem_rules","soar_actions","iocs"].map(k=>`<div class="c"><div class="ch">${k==="siem_rules"?"SIEM Rules":k==="soar_actions"?"SOAR Actions":"IOCs"}</div><div class="cb">${(PB.detection?.[k]||[]).map(r=>`<div style="margin-bottom:6px;padding:${k!=="soar_actions"?"7px 10px":"4px 0"};background:${k!=="soar_actions"?"#141929":"none"};border-radius:5px;font-family:${k!=="soar_actions"?"monospace":"inherit"};font-size:12px;color:${k!=="soar_actions"?"#7dd3fc":"#94a3b8"}">${r}</div>`).join("")}</div></div>`).join("")}
+  <div style="background:#0f1524;border:1px solid #1e2d4a;border-left:3px solid #00d4ff;border-radius:8px;padding:14px;font-size:14px;line-height:1.7;color:#94a3b8;margin-bottom:8px">${PB.summary}</div>
+  <h2>IR Playbook</h2>${(PB.playbook||[]).map(ph=>`<div class="c"><div class="ch">${ph.phase}</div><div class="cb">${(ph.steps||[]).map((s,i)=>`<div style="display:flex;gap:8px;margin-bottom:8px"><span style="color:#4a5568;font-family:monospace;font-size:11px;min-width:18px">${String(i+1).padStart(2,"0")}</span><span style="font-size:13px;color:#94a3b8">${s}</span></div>`).join("")}</div></div>`).join("")}
+  <h2>Detection</h2>${["siem_rules","soar_actions","iocs"].map(k=>`<div class="c"><div class="ch">${k==="siem_rules"?"SIEM Rules":k==="soar_actions"?"SOAR Actions":"IOCs"}</div><div class="cb">${(PB.detection?.[k]||[]).map(r=>`<div style="margin-bottom:6px;padding:${k!=="soar_actions"?"7px 10px":"4px 0"};background:${k!=="soar_actions"?"#141929":"none"};border-radius:5px;font-family:${k!=="soar_actions"?"monospace":"inherit"};font-size:12px;color:${k!=="soar_actions"?"#7dd3fc":"#94a3b8"}">${r}</div>`).join("")}</div></div>`).join("")}
   <h2>Checklist</h2>${(PB.checklist||[]).map(cat=>`<div class="c"><div class="ch">${cat.category}</div><div class="cb">${(cat.items||[]).map(item=>`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #1e2d4a;align-items:center"><div style="width:13px;height:13px;border:1px solid #2a3f6a;border-radius:3px;flex-shrink:0"></div><span style="font-size:13px;color:#94a3b8">${item}</span></div>`).join("")}</div></div>`).join("")}
   <h2>Remediation</h2>${(PB.remediation||[]).map(r=>`<div style="display:flex;gap:12px;padding:11px 13px;border:1px solid #1e2d4a;border-radius:8px;margin-bottom:8px;background:#0f1524"><div style="min-width:24px;height:24px;border-radius:50%;background:#141929;border:1px solid #2a3f6a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#00d4ff">${r.step}</div><div><div style="margin-bottom:3px"><span style="font-weight:600;font-size:13px;color:#e2e8f0;margin-right:8px">${r.title}</span><span style="font-size:11px;color:#ffbb33">${r.priority}</span></div><div style="font-size:13px;color:#94a3b8">${r.action}</div></div></div>`).join("")}
   <h2>MITRE ATT&CK</h2>${(PB.mitre||[]).map(t=>`<div class="c"><div class="ch"><span style="font-family:monospace;background:#141929;padding:2px 7px;border-radius:4px;color:#00d4ff;margin-right:8px;font-size:12px">${t.technique_id}</span>${t.technique_name}<span style="float:right;font-size:11px;font-weight:400;color:#4a5568">${t.tactic}</span></div><div class="cb"><div style="font-size:13px;margin-bottom:8px;color:#94a3b8">${t.description}</div>${(t.mitigations||[]).map(m=>`<div style="font-size:12px;color:#4a5568;margin-top:2px">› ${m}</div>`).join("")}</div></div>`).join("")}
