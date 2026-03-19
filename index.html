@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SOC Playbook Generator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--bg2:#0f1524;--bg3:#141929;--bg4:#1a2035;
+  --border:#1e2d4a;--border2:#2a3f6a;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#4a5568;
+  --accent:#00d4ff;--accent2:#0099cc;--accent-glow:rgba(0,212,255,0.15);
+  --green:#00ff88;--green-dim:#00cc6a;--green-bg:rgba(0,255,136,0.08);
+  --red:#ff4455;--red-bg:rgba(255,68,85,0.1);
+  --amber:#ffaa00;--amber-bg:rgba(255,170,0,0.1);
+  --blue:#378add;--blue-bg:rgba(55,138,221,0.1);
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,0.1);
+  --radius:8px;--radius-lg:12px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'SF Mono','Fira Code',monospace;
+}
+body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--bg);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* TOPBAR */
+#topbar{display:flex;align-items:center;gap:12px;padding:0 20px;height:56px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.logo-wrap{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#0a1628,#0f2040);border:1px solid var(--accent2);position:relative;}
+.logo-wrap svg{width:20px;height:20px;}
+.logo-pulse{position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
+.brand{display:flex;flex-direction:column;}
+.brand h1{font-size:15px;font-weight:600;color:var(--text);letter-spacing:0.02em;}
+.brand span{font-size:11px;color:var(--text3);letter-spacing:0.05em;}
+.topbar-badges{display:flex;gap:8px;margin-left:16px;}
+.topbar-badge{font-size:10px;padding:2px 8px;border-radius:99px;border:1px solid;font-weight:500;letter-spacing:0.04em;}
+.tb-live{background:var(--green-bg);color:var(--green);border-color:rgba(0,255,136,0.3);}
+.tb-ai{background:var(--accent-glow);color:var(--accent);border-color:rgba(0,212,255,0.3);}
+#topbar .spacer{flex:1;}
+#export-btn{display:none;padding:7px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--accent);font-size:12px;font-weight:500;cursor:pointer;letter-spacing:0.03em;transition:all 0.2s;}
+#export-btn:hover{background:var(--accent-glow);border-color:var(--accent);}
+
+/* APP */
+#app{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+#sidebar{width:300px;min-width:260px;border-right:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar-section{padding:16px;border-bottom:1px solid var(--border);}
+.s-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:8px;font-weight:600;}
+
+/* API KEY */
+.key-row{display:flex;gap:6px;}
+.key-row input{flex:1;padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px;font-family:var(--mono);}
+.key-row input:focus{outline:none;border-color:var(--accent);}
+.key-row button{padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;}
+.key-row button:hover{border-color:var(--accent);color:var(--accent);}
+.key-hint{font-size:11px;color:var(--text3);margin-top:5px;display:flex;align-items:center;gap:4px;}
+.key-hint.saved{color:var(--green);}
+
+/* TEXTAREA */
+textarea#incident{width:100%;resize:vertical;font-family:var(--font);font-size:13px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text);line-height:1.6;min-height:120px;transition:border-color 0.2s;}
+textarea#incident:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+textarea#incident::placeholder{color:var(--text3);}
+.hint{font-size:11px;color:var(--text3);margin-top:4px;}
+
+#generate-btn{width:100%;margin-top:10px;padding:10px;border-radius:var(--radius);border:1px solid var(--accent2);background:linear-gradient(135deg,rgba(0,153,204,0.15),rgba(0,212,255,0.08));color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.04em;transition:all 0.2s;position:relative;overflow:hidden;}
+#generate-btn:hover:not(:disabled){background:linear-gradient(135deg,rgba(0,153,204,0.25),rgba(0,212,255,0.15));box-shadow:0 0 20px rgba(0,212,255,0.2);}
+#generate-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* ACTIVE CARD */
+#active-card{display:none;padding:14px 16px;border-bottom:1px solid var(--border);}
+.ac-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;font-weight:600;}
+.ac-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.ac-type{font-size:13px;font-weight:600;color:var(--text);}
+.ac-summary{font-size:12px;color:var(--text2);line-height:1.5;}
+
+/* EXAMPLES */
+#examples{padding:14px 16px;flex:1;}
+.ex-btn{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;line-height:1.5;cursor:pointer;margin-bottom:5px;font-family:var(--font);transition:all 0.15s;position:relative;padding-left:22px;}
+.ex-btn::before{content:"›";position:absolute;left:8px;color:var(--text3);}
+.ex-btn:hover{background:var(--bg4);border-color:var(--border2);color:var(--text);padding-left:24px;}
+.ex-btn:hover::before{color:var(--accent);}
+
+/* STATUS */
+#status-box{display:none;padding:0 16px 14px;}
+.error-msg{padding:8px 11px;border-radius:var(--radius);background:var(--red-bg);color:var(--red);font-size:12px;line-height:1.5;border:1px solid rgba(255,68,85,0.2);}
+.debug-msg{padding:8px 11px;border-radius:var(--radius);background:var(--bg3);color:var(--text2);font-size:11px;font-family:var(--mono);border:1px solid var(--border);white-space:pre-wrap;line-height:1.6;margin-top:6px;}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+
+/* EMPTY STATE */
+#empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;}
+.es-icon{width:80px;height:80px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;position:relative;}
+.es-icon svg{width:36px;height:36px;opacity:0.4;}
+.es-ring{position:absolute;width:100px;height:100px;border-radius:50%;border:1px solid var(--border);animation:ring-pulse 2s ease-out infinite;}
+.es-ring2{animation-delay:1s;}
+@keyframes ring-pulse{0%{transform:scale(0.8);opacity:0.6}100%{transform:scale(1.4);opacity:0}}
+.es-title{font-size:16px;font-weight:600;color:var(--text2);}
+.es-sub{font-size:13px;color:var(--text3);text-align:center;max-width:300px;line-height:1.6;}
+.es-features{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+.es-feat{font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border);color:var(--text3);}
+
+/* LOADING */
+#loading-state{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.spinner-wrap{position:relative;width:48px;height:48px;}
+.spinner{width:48px;height:48px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.9s linear infinite;}
+.spinner-inner{position:absolute;top:8px;left:8px;width:32px;height:32px;border:2px solid var(--border);border-bottom-color:var(--accent2);border-radius:50%;animation:spin 1.3s linear infinite reverse;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-state p{font-size:13px;color:var(--text2);}
+#loading-state span{font-size:11px;color:var(--text3);}
+
+/* TABS */
+#tabs{display:none;border-bottom:1px solid var(--border);background:var(--bg2);overflow-x:auto;flex-shrink:0;}
+#tabs button{padding:12px 16px;border:none;border-bottom:2px solid transparent;background:none;font-size:12px;font-family:var(--font);color:var(--text3);cursor:pointer;white-space:nowrap;letter-spacing:0.03em;transition:all 0.15s;}
+#tabs button.active{border-bottom-color:var(--accent);color:var(--accent);}
+#tabs button:hover:not(.active){color:var(--text2);}
+
+/* CONTENT */
+#content{flex:1;overflow-y:auto;padding:1.5rem;}
+
+/* BADGES */
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:99px;font-weight:600;white-space:nowrap;letter-spacing:0.03em;}
+.sev-Critical{background:rgba(255,68,85,0.15);color:#ff6b7a;border:1px solid rgba(255,68,85,0.3);}
+.sev-High{background:rgba(255,170,0,0.12);color:#ffbb33;border:1px solid rgba(255,170,0,0.3);}
+.sev-Medium{background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);}
+.sev-Low{background:rgba(0,255,136,0.08);color:var(--green);border:1px solid rgba(0,255,136,0.25);}
+.pri-Immediate{background:rgba(255,68,85,0.12);color:#ff6b7a;border:1px solid rgba(255,68,85,0.25);}
+.pri-Short-term{background:rgba(255,170,0,0.1);color:#ffbb33;border:1px solid rgba(255,170,0,0.25);}
+.pri-Long-term{background:rgba(0,255,136,0.08);color:var(--green);border:1px solid rgba(0,255,136,0.2);}
+
+/* CARDS */
+.card{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:14px;background:var(--bg2);}
+.card-header{padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--border);font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;color:var(--text);}
+.card-header .count{font-size:12px;color:var(--text3);font-weight:400;margin-left:auto;}
+.card-body{padding:14px 16px;}
+
+/* SUMMARY */
+.meta-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.meta-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;min-width:120px;}
+.mc-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:600;}
+.mc-val{font-size:13px;font-weight:600;color:var(--text);}
+.summary-text{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-lg);padding:1rem 1.25rem;line-height:1.7;font-size:14px;margin-bottom:16px;color:var(--text2);}
+.tactic-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.tactic-pill{font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--border2);color:var(--text2);cursor:pointer;background:var(--bg3);transition:all 0.15s;}
+.tactic-pill:hover{border-color:var(--accent);color:var(--accent);}
+
+/* STEPS */
+.step-num{color:var(--text3);font-family:var(--mono);font-size:11px;min-width:20px;padding-top:2px;}
+.phase-num{width:22px;height:22px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent);flex-shrink:0;}
+
+/* DETECTION */
+.mono-item{padding:8px 12px;background:var(--bg3);border-radius:var(--radius);font-family:var(--mono);font-size:12px;line-height:1.6;margin-bottom:6px;border:1px solid var(--border);color:#7dd3fc;}
+.plain-item{padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.6;color:var(--text2);}
+.plain-item:last-child{border-bottom:none;}
+.arrow{color:var(--accent);margin-right:8px;}
+
+/* CHECKLIST */
+.check-row{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:flex-start;user-select:none;transition:background 0.1s;}
+.check-row:last-child{border-bottom:none;}
+.check-row:hover{background:var(--bg3);margin:0 -16px;padding-left:16px;padding-right:16px;}
+.check-box{min-width:16px;height:16px;border-radius:4px;border:1px solid var(--border2);background:var(--bg3);display:flex;align-items:center;justify-content:center;margin-top:2px;flex-shrink:0;transition:all 0.15s;}
+.check-box.checked{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px rgba(0,212,255,0.4);}
+.check-label{font-size:13px;line-height:1.6;color:var(--text2);}
+.check-label.done{text-decoration:line-through;color:var(--text3);}
+
+/* REMEDIATION */
+.rem-row{display:flex;gap:14px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;align-items:flex-start;background:var(--bg2);transition:border-color 0.2s;}
+.rem-row:hover{border-color:var(--border2);}
+.rem-num{min-width:26px;height:26px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;margin-top:1px;}
+.rem-title{font-weight:600;font-size:13px;color:var(--text);margin-right:8px;}
+.rem-action{font-size:13px;color:var(--text2);line-height:1.6;margin-top:4px;}
+
+/* MITRE */
+.mitre-card{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:14px;background:var(--bg2);}
+.mitre-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.mitre-id{font-family:var(--mono);font-size:12px;background:var(--bg3);padding:2px 8px;border-radius:4px;color:var(--accent);text-decoration:none;border:1px solid var(--border2);}
+.mitre-id:hover{border-color:var(--accent);}
+.mitre-name{font-weight:600;font-size:13px;color:var(--text);}
+.mitre-tactic{margin-left:auto;font-size:11px;padding:2px 9px;border-radius:99px;color:var(--text2);border:1px solid var(--border2);background:var(--bg3);}
+.mitre-body{padding:12px 16px;}
+.mitre-desc{font-size:13px;line-height:1.6;margin-bottom:10px;color:var(--text2);}
+.mit-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:600;}
+.mit-row{font-size:12px;color:var(--text2);padding:4px 0;border-top:1px solid var(--border);display:flex;gap:8px;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo-wrap">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#00d4ff" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M9 12l2 2 4-4" stroke="#00ff88" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="logo-pulse"></div>
+  </div>
+  <div class="brand">
+    <h1>SOC Playbook Generator</h1>
+    <span>ENTERPRISE INCIDENT RESPONSE</span>
+  </div>
+  <div class="topbar-badges">
+    <span class="topbar-badge tb-live">● LIVE</span>
+    <span class="topbar-badge tb-ai">AI-POWERED</span>
+  </div>
+  <div class="spacer"></div>
+  <button id="export-btn" onclick="exportPDF()">⬇ Export PDF</button>
+</div>
+
+<div id="app">
+  <div id="sidebar">
+
+    <div class="sidebar-section">
+      <label class="s-label">🔑 Anthropic API Key</label>
+      <div class="key-row">
+        <input type="password" id="apikey-input" placeholder="sk-ant-..." />
+        <button onclick="saveKey()">Save</button>
+      </div>
+      <div class="key-hint" id="key-hint">Saved locally in your browser · never sent anywhere else</div>
+    </div>
+
+    <div class="sidebar-section">
+      <label class="s-label">Incident description</label>
+      <textarea id="incident" placeholder="Describe the threat or incident in plain language..." rows="6"></textarea>
+      <div class="hint">⌘ Enter to generate</div>
+      <button id="generate-btn" onclick="generate()">Generate Playbook ↗</button>
+    </div>
+
+    <div id="active-card">
+      <div class="ac-label">⚡ Active incident</div>
+      <div class="ac-row">
+        <span class="ac-type" id="ac-type"></span>
+        <span id="ac-sev"></span>
+      </div>
+      <div class="ac-summary" id="ac-summary"></div>
+    </div>
+
+    <div id="examples">
+      <label class="s-label">Quick examples</label>
+      <button class="ex-btn" onclick="setExample(this)">Ransomware on Windows endpoints, lateral movement via SMB detected</button>
+      <button class="ex-btn" onclick="setExample(this)">Encoded PowerShell execution from HR workstation</button>
+      <button class="ex-btn" onclick="setExample(this)">Brute force on Azure AD — 500+ failed logins in 10 min</button>
+      <button class="ex-btn" onclick="setExample(this)">Phishing email with macro-enabled Excel attachment opened</button>
+    </div>
+
+    <div id="status-box">
+      <div id="error-msg" class="error-msg" style="display:none"></div>
+      <div id="debug-msg" class="debug-msg" style="display:none"></div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="empty-state">
+      <div class="es-icon">
+        <div class="es-ring"></div>
+        <div class="es-ring es-ring2"></div>
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#00d4ff" stroke-width="1.2"/>
+          <path d="M9 12l2 2 4-4" stroke="#00ff88" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="es-title">No playbook generated yet</div>
+      <div class="es-sub">Enter your API key and describe an incident to generate a full SOC response playbook</div>
+      <div class="es-features">
+        <span class="es-feat">IR Playbook</span>
+        <span class="es-feat">SIEM Rules</span>
+        <span class="es-feat">IOC Detection</span>
+        <span class="es-feat">MITRE ATT&amp;CK</span>
+        <span class="es-feat">Remediation</span>
+        <span class="es-feat">PDF Export</span>
+      </div>
+    </div>
+
+    <div id="loading-state">
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+        <div class="spinner-inner"></div>
+      </div>
+      <p>Analyzing threat intelligence...</p>
+      <span>Generating incident response playbook</span>
+    </div>
+
+    <div id="tabs">
+      <button class="active" onclick="switchTab('summary',this)">◈ Summary</button>
+      <button onclick="switchTab('playbook',this)">◎ IR Playbook</button>
+      <button onclick="switchTab('detection',this)">◉ Detection</button>
+      <button onclick="switchTab('checklist',this)">◇ Checklist</button>
+      <button onclick="switchTab('remediation',this)">◆ Remediation</button>
+      <button onclick="switchTab('mitre',this)">⬡ MITRE ATT&amp;CK</button>
+    </div>
+
+    <div id="content"></div>
+  </div>
+</div>
+
+<script>
+const TACTIC_BG={"Initial Access":"rgba(55,138,221,0.12)","Execution":"rgba(255,170,0,0.1)","Persistence":"rgba(167,139,250,0.1)","Privilege Escalation":"rgba(255,68,85,0.1)","Defense Evasion":"rgba(236,72,153,0.1)","Credential Access":"rgba(255,170,0,0.1)","Discovery":"rgba(0,255,136,0.08)","Lateral Movement":"rgba(255,68,85,0.1)","Collection":"rgba(55,138,221,0.1)","Exfiltration":"rgba(255,68,85,0.1)","Command and Control":"rgba(167,139,250,0.1)","Impact":"rgba(255,68,85,0.12)"};
+const TACTIC_COLOR={"Initial Access":"#7dd3fc","Execution":"#ffbb33","Persistence":"#a78bfa","Privilege Escalation":"#ff6b7a","Defense Evasion":"#f472b6","Credential Access":"#ffbb33","Discovery":"#00ff88","Lateral Movement":"#ff6b7a","Collection":"#7dd3fc","Exfiltration":"#ff6b7a","Command and Control":"#a78bfa","Impact":"#ff6b7a"};
+
+const SYSTEM=`You are a senior SOC analyst. Given a threat or incident description, output ONLY a JSON object — no markdown, no preamble, no trailing text. Be concise: max 3 steps per phase, max 3 items per array, max 4 MITRE techniques.
+
+{
+  "severity": "Critical|High|Medium|Low",
+  "threat_type": "Short category e.g. Ransomware",
+  "summary": "2 sentence incident overview",
+  "playbook": [{"phase":"Phase name","steps":["step"]}],
+  "detection": {
+    "siem_rules": ["rule — max 2"],
+    "soar_actions": ["action — max 3"],
+    "iocs": ["ioc — max 3"]
+  },
+  "checklist": [{"category":"Name","items":["item — max 3 per category, max 3 categories"]}],
+  "remediation": [{"step":1,"title":"Short","action":"Detail","priority":"Immediate|Short-term|Long-term"}],
+  "mitre": [{"tactic":"Name","technique_id":"T1234","technique_name":"Name","description":"1 sentence","mitigations":["M1234 - Name"]}]
+}`;
+
+let playbook=null,activeTab="summary",apiKey=localStorage.getItem("soc_api_key")||"";
+
+function init(){
+  if(apiKey){
+    document.getElementById("apikey-input").value=apiKey;
+    document.getElementById("key-hint").textContent="✓ Key saved · secured in local storage";
+    document.getElementById("key-hint").classList.add("saved");
+  }
+  document.getElementById("incident").addEventListener("keydown",e=>{
+    if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))generate();
+  });
+}
+
+function saveKey(){
+  const val=document.getElementById("apikey-input").value.trim();
+  if(!val)return;
+  apiKey=val;
+  localStorage.setItem("soc_api_key",val);
+  const hint=document.getElementById("key-hint");
+  hint.textContent="✓ Key saved · secured in local storage";
+  hint.classList.add("saved");
+}
+
+function setExample(btn){document.getElementById("incident").value=btn.textContent.trim();}
+
+function showDebug(lines){
+  document.getElementById("status-box").style.display="block";
+  const d=document.getElementById("debug-msg");
+  d.style.display="block";d.textContent=lines.join("\n");
+}
+function showError(msg){
+  document.getElementById("status-box").style.display="block";
+  const e=document.getElementById("error-msg");
+  e.style.display="block";e.textContent=msg;
+}
+function clearStatus(){
+  document.getElementById("status-box").style.display="none";
+  document.getElementById("error-msg").style.display="none";
+  document.getElementById("debug-msg").style.display="none";
+  document.getElementById("error-msg").textContent="";
+  document.getElementById("debug-msg").textContent="";
+}
+
+async function generate(){
+  const input=document.getElementById("incident").value.trim();
+  if(!input)return;
+  if(!apiKey){showError("Please enter your Anthropic API key above.");return;}
+  clearStatus();playbook=null;
+  document.getElementById("empty-state").style.display="none";
+  document.getElementById("loading-state").style.display="flex";
+  document.getElementById("tabs").style.display="none";
+  document.getElementById("content").style.display="none";
+  document.getElementById("export-btn").style.display="none";
+  document.getElementById("active-card").style.display="none";
+  document.getElementById("generate-btn").disabled=true;
+  document.getElementById("generate-btn").textContent="Analyzing...";
+  const log=[];
+  try{
+    log.push("1. Sending request...");
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:4000,system:SYSTEM,messages:[{role:"user",content:input}]}),
+    });
+    log.push(`2. Status: ${res.status}`);
+    const data=await res.json();
+    if(!res.ok)throw new Error(`${res.status}: ${data?.error?.message||JSON.stringify(data)}`);
+    const raw=data.content?.find(b=>b.type==="text")?.text||"";
+    log.push(`3. Response: ${raw.length} chars`);
+    const match=raw.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error("No JSON found. Raw: "+raw.slice(0,200));
+    playbook=JSON.parse(match[0]);
+    renderPlaybook();
+  }catch(e){
+    log.push("ERROR: "+e.message);
+    showDebug(log);showError(e.message);
+    document.getElementById("loading-state").style.display="none";
+    document.getElementById("empty-state").style.display="flex";
+  }
+  document.getElementById("generate-btn").disabled=false;
+  document.getElementById("generate-btn").textContent="Generate Playbook ↗";
+}
+
+function renderPlaybook(){
+  document.getElementById("loading-state").style.display="none";
+  document.getElementById("tabs").style.display="flex";
+  document.getElementById("content").style.display="block";
+  document.getElementById("export-btn").style.display="block";
+  document.getElementById("ac-type").textContent=playbook.threat_type||"";
+  document.getElementById("ac-sev").innerHTML=`<span class="badge sev-${playbook.severity}">${playbook.severity}</span>`;
+  document.getElementById("ac-summary").textContent=(playbook.summary||"").slice(0,100)+"...";
+  document.getElementById("active-card").style.display="block";
+  document.querySelectorAll("#tabs button").forEach((t,i)=>{t.classList.toggle("active",i===0);});
+  activeTab="summary";renderTab("summary");
+}
+
+function switchTab(tab,btn){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");activeTab=tab;renderTab(tab);
+}
+function switchTabByName(tab){
+  const names=["summary","playbook","detection","checklist","remediation","mitre"];
+  const idx=names.indexOf(tab);
+  if(idx>=0){document.querySelectorAll("#tabs button").forEach((t,i)=>t.classList.toggle("active",i===idx));activeTab=tab;renderTab(tab);}
+}
+
+function renderTab(tab){
+  const el=document.getElementById("content");
+  if(tab==="summary")el.innerHTML=renderSummary();
+  else if(tab==="playbook")el.innerHTML=renderIRPlaybook();
+  else if(tab==="detection")el.innerHTML=renderDetection();
+  else if(tab==="checklist")el.innerHTML=renderChecklist();
+  else if(tab==="remediation")el.innerHTML=renderRemediation();
+  else if(tab==="mitre")el.innerHTML=renderMitre();
+  if(tab==="checklist")attachChecklistHandlers();
+}
+
+function renderSummary(){
+  const tactics=(playbook.mitre||[]).map(t=>`<span class="tactic-pill" style="background:${TACTIC_BG[t.tactic]||'rgba(255,255,255,0.05)'};color:${TACTIC_COLOR[t.tactic]||'#94a3b8'};border-color:${TACTIC_COLOR[t.tactic]||'#2a3f6a'}44" onclick="switchTabByName('mitre')">${t.tactic}</span>`).join("");
+  return`<div class="meta-grid">
+    <div class="meta-card"><div class="mc-label">Severity</div><span class="badge sev-${playbook.severity}">${playbook.severity}</span></div>
+    <div class="meta-card"><div class="mc-label">Threat type</div><div class="mc-val">${playbook.threat_type}</div></div>
+    <div class="meta-card"><div class="mc-label">MITRE tactics</div><div class="mc-val" style="color:var(--accent)">${(playbook.mitre||[]).length} mapped</div></div>
+    <div class="meta-card"><div class="mc-label">Playbook phases</div><div class="mc-val" style="color:var(--green)">${(playbook.playbook||[]).length} phases</div></div>
+  </div>
+  <div class="summary-text">${playbook.summary}</div>
+  <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">ATT&CK tactics detected</div>
+  <div class="tactic-pills">${tactics}</div>`;
+}
+
+function renderIRPlaybook(){
+  return(playbook.playbook||[]).map((phase,i)=>`
+    <div class="card">
+      <div class="card-header"><span class="phase-num">${i+1}</span>${phase.phase}</div>
+      <div class="card-body">${(phase.steps||[]).map((s,j)=>`
+        <div style="display:flex;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.6">
+          <span class="step-num">${String(j+1).padStart(2,"0")}</span>
+          <span style="color:var(--text2)">${s}</span>
+        </div>`).join("")}</div>
+    </div>`).join("");
+}
+
+function renderDetection(){
+  return[{key:"siem_rules",label:"SIEM rules",mono:true},{key:"soar_actions",label:"SOAR actions",mono:false},{key:"iocs",label:"Indicators of compromise",mono:true}].map(({key,label,mono})=>`
+    <div class="card">
+      <div class="card-header">${label}</div>
+      <div class="card-body">${(playbook.detection?.[key]||[]).map(item=>
+        mono?`<div class="mono-item">${item}</div>`
+            :`<div class="plain-item"><span class="arrow">›</span>${item}</div>`
+      ).join("")}</div>
+    </div>`).join("");
+}
+
+function renderChecklist(){
+  return(playbook.checklist||[]).map((cat,ci)=>`
+    <div class="card">
+      <div class="card-header">${cat.category}<span class="count" id="cnt-${ci}">0/${(cat.items||[]).length} done</span></div>
+      <div class="card-body">${(cat.items||[]).map((item,ii)=>`
+        <div class="check-row" data-ci="${ci}" data-ii="${ii}">
+          <div class="check-box" id="cb-${ci}-${ii}"></div>
+          <span class="check-label" id="cl-${ci}-${ii}">${item}</span>
+        </div>`).join("")}</div>
+    </div>`).join("");
+}
+
+function attachChecklistHandlers(){
+  document.querySelectorAll(".check-row").forEach(row=>{
+    row.addEventListener("click",()=>{
+      const ci=row.dataset.ci,ii=row.dataset.ii;
+      const box=document.getElementById(`cb-${ci}-${ii}`);
+      const lbl=document.getElementById(`cl-${ci}-${ii}`);
+      const checked=box.classList.toggle("checked");
+      lbl.classList.toggle("done",checked);
+      box.innerHTML=checked?`<svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#0a0e1a" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`:"";
+      const done=document.querySelectorAll(`[data-ci="${ci}"] .check-box.checked`).length;
+      document.getElementById(`cnt-${ci}`).textContent=`${done}/${playbook.checklist[ci].items.length} done`;
+    });
+  });
+}
+
+function renderRemediation(){
+  return(playbook.remediation||[]).map(r=>`
+    <div class="rem-row">
+      <div class="rem-num">${r.step}</div>
+      <div>
+        <div><span class="rem-title">${r.title}</span><span class="badge pri-${r.priority}">${r.priority}</span></div>
+        <div class="rem-action">${r.action}</div>
+      </div>
+    </div>`).join("");
+}
+
+function renderMitre(){
+  return`<div style="font-size:12px;color:var(--text3);margin-bottom:14px">Techniques mapped to the MITRE ATT&CK framework based on the incident</div>`
+  +(playbook.mitre||[]).map(t=>`
+    <div class="mitre-card">
+      <div class="mitre-header" style="background:${TACTIC_BG[t.tactic]||'rgba(255,255,255,0.02)'}">
+        <a class="mitre-id" href="https://attack.mitre.org/techniques/${t.technique_id}" target="_blank">${t.technique_id}</a>
+        <span class="mitre-name">${t.technique_name}</span>
+        <span class="mitre-tactic" style="color:${TACTIC_COLOR[t.tactic]||'#94a3b8'}">${t.tactic}</span>
+      </div>
+      <div class="mitre-body">
+        <div class="mitre-desc">${t.description}</div>
+        ${(t.mitigations||[]).length?`<div class="mit-label">Mitigations</div>${t.mitigations.map(m=>`<div class="mit-row"><span class="arrow">›</span>${m}</div>`).join("")}`:""}
+      </div>
+    </div>`).join("");
+}
+
+function exportPDF(){
+  if(!playbook)return;
+  const w=window.open("","_blank");
+  const sevColor={Critical:"#ff4455",High:"#ffaa00",Medium:"#00d4ff",Low:"#00ff88"};
+  const sevBg={Critical:"rgba(255,68,85,0.15)",High:"rgba(255,170,0,0.12)",Medium:"rgba(0,212,255,0.1)",Low:"rgba(0,255,136,0.08)"};
+  w.document.write(`<!DOCTYPE html><html><head><title>SOC Playbook — ${playbook.threat_type}</title>
+  <style>body{font-family:-apple-system,sans-serif;color:#e2e8f0;background:#0a0e1a;padding:40px;max-width:900px;margin:auto}h2{font-size:14px;font-weight:700;margin:28px 0 10px;color:#00d4ff;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #1e2d4a;padding-bottom:6px}.card{border:1px solid #1e2d4a;border-radius:8px;overflow:hidden;margin-bottom:14px;background:#0f1524}.ch{background:#141929;padding:9px 14px;font-weight:600;font-size:13px;border-bottom:1px solid #1e2d4a;color:#e2e8f0}.cb{padding:10px 14px}@media print{body{background:#0a0e1a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+  </head><body>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #1e2d4a">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="#00d4ff" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="#00ff88" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><div style="font-size:20px;font-weight:700;color:#e2e8f0">SOC Incident Playbook</div><div style="font-size:13px;color:#4a5568;margin-top:3px">${playbook.threat_type} · ${new Date().toLocaleDateString()}</div></div>
+    <span style="margin-left:auto;padding:4px 14px;border-radius:99px;background:${sevBg[playbook.severity]};color:${sevColor[playbook.severity]};font-weight:700;font-size:12px">${playbook.severity}</span>
+  </div>
+  <div style="background:#0f1524;border:1px solid #1e2d4a;border-left:3px solid #00d4ff;border-radius:8px;padding:14px;font-size:14px;line-height:1.7;margin-bottom:8px;color:#94a3b8">${playbook.summary}</div>
+  <h2>Incident Response Playbook</h2>${(playbook.playbook||[]).map(ph=>`<div class="card"><div class="ch">${ph.phase}</div><div class="cb">${(ph.steps||[]).map((s,i)=>`<div style="display:flex;gap:8px;margin-bottom:8px"><span style="color:#4a5568;font-family:monospace;font-size:11px;min-width:18px">${String(i+1).padStart(2,"0")}</span><span style="font-size:13px;color:#94a3b8">${s}</span></div>`).join("")}</div></div>`).join("")}
+  <h2>Detection Rules</h2>${["siem_rules","soar_actions","iocs"].map(k=>`<div class="card"><div class="ch">${k==="siem_rules"?"SIEM Rules":k==="soar_actions"?"SOAR Actions":"IOCs"}</div><div class="cb">${(playbook.detection?.[k]||[]).map(r=>`<div style="margin-bottom:6px;padding:${k!=="soar_actions"?"7px 10px":"4px 0"};background:${k!=="soar_actions"?"#141929":"none"};border-radius:5px;font-family:${k!=="soar_actions"?"monospace":"inherit"};font-size:12px;color:${k!=="soar_actions"?"#7dd3fc":"#94a3b8"}">${r}</div>`).join("")}</div></div>`).join("")}
+  <h2>Investigation Checklist</h2>${(playbook.checklist||[]).map(cat=>`<div class="card"><div class="ch">${cat.category}</div><div class="cb">${(cat.items||[]).map(item=>`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #1e2d4a;align-items:center"><div style="width:13px;height:13px;border:1px solid #2a3f6a;border-radius:3px;flex-shrink:0"></div><span style="font-size:13px;color:#94a3b8">${item}</span></div>`).join("")}</div></div>`).join("")}
+  <h2>Remediation Runbook</h2>${(playbook.remediation||[]).map(r=>`<div style="display:flex;gap:12px;padding:11px 13px;border:1px solid #1e2d4a;border-radius:8px;margin-bottom:8px;background:#0f1524"><div style="min-width:24px;height:24px;border-radius:50%;background:#141929;border:1px solid #2a3f6a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#00d4ff">${r.step}</div><div><div style="margin-bottom:3px"><span style="font-weight:600;font-size:13px;color:#e2e8f0;margin-right:8px">${r.title}</span><span style="font-size:11px;color:#ffbb33">${r.priority}</span></div><div style="font-size:13px;color:#94a3b8">${r.action}</div></div></div>`).join("")}
+  <h2>MITRE ATT&CK Mapping</h2>${(playbook.mitre||[]).map(t=>`<div class="card"><div class="ch"><span style="font-family:monospace;font-size:12px;background:#141929;padding:2px 7px;border-radius:4px;color:#00d4ff;margin-right:8px">${t.technique_id}</span>${t.technique_name}<span style="float:right;font-size:11px;font-weight:400;color:#4a5568">${t.tactic}</span></div><div class="cb"><div style="font-size:13px;margin-bottom:8px;color:#94a3b8">${t.description}</div>${(t.mitigations||[]).map(m=>`<div style="font-size:12px;color:#4a5568;margin-top:2px">› ${m}</div>`).join("")}</div></div>`).join("")}
+  </body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),400);
+}
+
+init();
+</script>
+</body>
+</html>
