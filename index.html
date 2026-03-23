@@ -294,7 +294,7 @@ const PROVIDERS={
   anthropic:{name:"Anthropic",placeholder:"sk-ant-...",link:"https://console.anthropic.com/",linkText:"Get Anthropic API key",model:"claude-haiku-4-5-20251001"},
   openai:{name:"OpenAI",placeholder:"sk-...",link:"https://platform.openai.com/api-keys",linkText:"Get OpenAI API key",model:"gpt-4o-mini"},
   groq:{name:"Groq",placeholder:"gsk_...",link:"https://console.groq.com/keys",linkText:"Get Groq API key (free)",model:"llama-3.3-70b-versatile"},
-  gemini:{name:"Gemini",placeholder:"AIza...",link:"https://aistudio.google.com/app/apikey",linkText:"Get Gemini API key (free)",model:"gemini-1.5-flash"},
+  gemini:{name:"Gemini",placeholder:"AIza...",link:"https://aistudio.google.com/app/apikey",linkText:"Get Gemini API key (free)",model:"gemini-2.0-flash"},
 };
 
 const TBG={"Initial Access":"rgba(55,138,221,0.12)","Execution":"rgba(255,170,0,0.1)","Persistence":"rgba(167,139,250,0.1)","Privilege Escalation":"rgba(255,68,85,0.1)","Defense Evasion":"rgba(236,72,153,0.1)","Credential Access":"rgba(255,170,0,0.1)","Discovery":"rgba(0,255,136,0.08)","Lateral Movement":"rgba(255,68,85,0.1)","Collection":"rgba(55,138,221,0.1)","Exfiltration":"rgba(255,68,85,0.1)","Command and Control":"rgba(167,139,250,0.1)","Impact":"rgba(255,68,85,0.12)"};
@@ -371,7 +371,7 @@ async function callGroq(key,inp){
 }
 
 async function callGemini(key,inp){
-  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${PROVIDERS.gemini.model}:generateContent?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:SYS+"\n\nIncident: "+inp}]}]})});
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${PROVIDERS.gemini.model}:generateContent?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:SYS+"\n\nIncident: "+inp}]}],generationConfig:{maxOutputTokens:4000}})});
   const data=await res.json();
   if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
   return data.candidates?.[0]?.content?.parts?.[0]?.text||"";
