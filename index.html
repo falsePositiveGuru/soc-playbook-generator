@@ -401,21 +401,33 @@ async function generate(){
     else if(curProvider==="groq")raw=await callGroq(key,inp);
     else if(curProvider==="gemini")raw=await callGemini(key,inp);
     log.push("Response: "+raw.length+" chars");
+    raw=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
     const m=raw.match(/\{[\s\S]*\}/);
     if(!m)throw new Error("No JSON found. Raw: "+raw.slice(0,300));
-    let jsonStr=m[0];
-    jsonStr=jsonStr.replace(/[\u0000-\u001F\u007F-\u009F]/g,c=>{
-      const safe={'\n':'\\n','\r':'\\r','\t':'\\t'};
-      return safe[c]||'';
-    });
-    try{PB=JSON.parse(jsonStr);}
-    catch(e1){
-      jsonStr=jsonStr.replace(/,\s*([}\]])/g,'$1').replace(/([{,]\s*)(\w+)\s*:/g,'$1"$2":');
-      try{PB=JSON.parse(jsonStr);}
-      catch(e2){
-        const truncated=jsonStr.replace(/,?\s*"[^"]*"\s*:\s*[^,}\]]*$/,'').replace(/,?\s*"[^"]*"?\s*$/,'');
-        const fixed=truncated.replace(/(\{[^}]*$)/,'').replace(/(\[[^\]]*$)/,'');
-        PB=JSON.parse(fixed+'}}');
+    let js=m[0];
+    js=js.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
+    js=js.replace(/\n/g,'\\n').replace(/\r/g,'').replace(/\t/g,'\\t');
+    js=js.replace(/\\n(?=[^"]*(?:"[^"]*"[^"]*)*$)/g,' ');
+    js=js.replace(/,(\s*[}\]])/g,'$1');
+    try{
+      PB=JSON.parse(js);
+    }catch(e1){
+      log.push("First parse failed: "+e1.message+", trying repair...");
+      try{
+        const safe=js.replace(/"(?:[^"\\]|\\.)*"/g,s=>s.replace(/\n/g,' ').replace(/\t/g,' '));
+        PB=JSON.parse(safe);
+      }catch(e2){
+        log.push("Second parse failed: "+e2.message+", trying extract...");
+        const lastGood=js.lastIndexOf('"}');
+        if(lastGood>0){
+          let trimmed=js.slice(0,lastGood+2);
+          const opens=(trimmed.match(/\[/g)||[]).length;
+          const closes=(trimmed.match(/\]/g)||[]).length;
+          trimmed+=']'.repeat(Math.max(0,opens-closes))+'}}';
+          PB=JSON.parse(trimmed);
+        } else {
+          throw new Error("Could not parse response. Try again or rephrase the incident.");
+        }
       }
     }
     renderPB();
