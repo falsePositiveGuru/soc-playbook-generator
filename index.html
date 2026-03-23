@@ -403,7 +403,21 @@ async function generate(){
     log.push("Response: "+raw.length+" chars");
     const m=raw.match(/\{[\s\S]*\}/);
     if(!m)throw new Error("No JSON found. Raw: "+raw.slice(0,300));
-    PB=JSON.parse(m[0]);
+    let jsonStr=m[0];
+    jsonStr=jsonStr.replace(/[\u0000-\u001F\u007F-\u009F]/g,c=>{
+      const safe={'\n':'\\n','\r':'\\r','\t':'\\t'};
+      return safe[c]||'';
+    });
+    try{PB=JSON.parse(jsonStr);}
+    catch(e1){
+      jsonStr=jsonStr.replace(/,\s*([}\]])/g,'$1').replace(/([{,]\s*)(\w+)\s*:/g,'$1"$2":');
+      try{PB=JSON.parse(jsonStr);}
+      catch(e2){
+        const truncated=jsonStr.replace(/,?\s*"[^"]*"\s*:\s*[^,}\]]*$/,'').replace(/,?\s*"[^"]*"?\s*$/,'');
+        const fixed=truncated.replace(/(\{[^}]*$)/,'').replace(/(\[[^\]]*$)/,'');
+        PB=JSON.parse(fixed+'}}');
+      }
+    }
     renderPB();
   }catch(e){
     log.push("ERROR: "+e.message);
