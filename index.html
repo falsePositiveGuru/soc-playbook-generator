@@ -299,8 +299,56 @@ const PROVIDERS={
 
 const TBG={"Initial Access":"rgba(55,138,221,0.12)","Execution":"rgba(255,170,0,0.1)","Persistence":"rgba(167,139,250,0.1)","Privilege Escalation":"rgba(255,68,85,0.1)","Defense Evasion":"rgba(236,72,153,0.1)","Credential Access":"rgba(255,170,0,0.1)","Discovery":"rgba(0,255,136,0.08)","Lateral Movement":"rgba(255,68,85,0.1)","Collection":"rgba(55,138,221,0.1)","Exfiltration":"rgba(255,68,85,0.1)","Command and Control":"rgba(167,139,250,0.1)","Impact":"rgba(255,68,85,0.12)"};
 const TCL={"Initial Access":"#7dd3fc","Execution":"#ffbb33","Persistence":"#a78bfa","Privilege Escalation":"#ff6b7a","Defense Evasion":"#f472b6","Credential Access":"#ffbb33","Discovery":"#00ff88","Lateral Movement":"#ff6b7a","Collection":"#7dd3fc","Exfiltration":"#ff6b7a","Command and Control":"#a78bfa","Impact":"#ff6b7a"};
-const SYS=`You are a senior SOC analyst. Given a threat or incident description, output ONLY a JSON object — no markdown, no preamble, no trailing text. Be concise: max 3 steps per phase, max 3 items per array, max 4 MITRE techniques.
-{"severity":"Critical|High|Medium|Low","threat_type":"Short category","summary":"2 sentence overview","playbook":[{"phase":"name","steps":["step"]}],"detection":{"siem_rules":["rule"],"soar_actions":["action"],"iocs":["ioc"]},"checklist":[{"category":"Name","items":["item"]}],"remediation":[{"step":1,"title":"Short","action":"Detail","priority":"Immediate|Short-term|Long-term"}],"mitre":[{"tactic":"Name","technique_id":"T1234","technique_name":"Name","description":"1 sentence","mitigations":["M1234 - Name"]}]}`;
+const SYS=`You are a senior SOC analyst with 15+ years of experience. Given a threat or incident description, output ONLY a JSON object — no markdown, no preamble, no trailing text. Be detailed and specific — this will be used by SOC analysts in production.
+
+{
+  "severity": "Critical|High|Medium|Low",
+  "threat_type": "Specific threat category",
+  "summary": "3-4 sentence detailed incident overview covering what happened, potential impact, affected systems, and urgency",
+  "playbook": [
+    {
+      "phase": "Phase name",
+      "steps": [
+        "Detailed actionable step with specific tools, commands, or platforms to use — at least 2 sentences each"
+      ]
+    }
+  ],
+  "detection": {
+    "siem_rules": ["Specific Splunk SPL or KQL query with field names and logic — max 3"],
+    "soar_actions": ["Specific automated action with tool name and trigger condition — max 4"],
+    "iocs": ["Specific IOC with type and context e.g. IP:1.2.3.4 (C2 server), Hash:abc123 (dropper) — max 5"]
+  },
+  "checklist": [
+    {
+      "category": "Category name",
+      "items": ["Specific actionable checklist item with who should do it and how — max 4 per category, max 4 categories"]
+    }
+  ],
+  "remediation": [
+    {
+      "step": 1,
+      "title": "Short title",
+      "action": "Detailed 2-3 sentence remediation action with specific tools, commands, or steps to execute",
+      "priority": "Immediate|Short-term|Long-term"
+    }
+  ],
+  "mitre": [
+    {
+      "tactic": "Tactic name",
+      "technique_id": "T1234",
+      "technique_name": "Technique name",
+      "description": "2 sentence description of how this technique applies to the specific incident",
+      "mitigations": ["Specific mitigation with control ID and implementation detail — max 3"]
+    }
+  ]
+}
+
+Rules:
+- Playbook must have 5-6 phases covering full IR lifecycle: Identification, Containment, Eradication, Recovery, Post-Incident
+- Each phase must have 4-5 detailed steps
+- Steps must reference real tools (Splunk, CrowdStrike, Wireshark, etc.) where relevant
+- Be specific to the incident described — no generic steps
+- Max 5 MITRE techniques`;
 
 let PB=null,curProvider="anthropic";
 let apiKeys=JSON.parse(localStorage.getItem("soc_keys")||"{}");
@@ -364,7 +412,7 @@ async function callOpenAI(key,inp){
 }
 
 async function callGroq(key,inp){
-  const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:PROVIDERS.groq.model,max_tokens:4000,messages:[{role:"system",content:SYS},{role:"user",content:inp}]})});
+  const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},    body:JSON.stringify({model:PROVIDERS.groq.model,max_tokens:8000,messages:[{role:"system",content:SYS},{role:"user",content:inp}]})});
   const data=await res.json();
   if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
   return data.choices?.[0]?.message?.content||"";
