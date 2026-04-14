@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-a78bfa?style=flat-square)
 ![No Dependencies](https://img.shields.io/badge/Dependencies-None-ffbb33?style=flat-square)
 
-**🌐 Live App →** [falsepositiveguru.github.io/soc-playbook-generator](https://falsepositiveguru.github.io/soc-playbook-generator/)
+**🌐 Live App →** [falsepositiveguru.github.io/soc-playbook-generator](https://soc-playbook-generator.ksuneelbaba9.workers.dev)
 
 ---
 
