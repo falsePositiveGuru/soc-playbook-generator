@@ -41,12 +41,12 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 
 /* PROVIDER SELECTOR */
 .provider-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
-.prov-btn{padding:8px 6px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;text-align:center;transition:all 0.15s;font-family:var(--font);}
+.prov-btn{padding:8px 6px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;text-align:center;transition:all 0.15s;font-family:var(--font);user-select:none;-webkit-user-select:none;}
 .prov-btn:hover{border-color:var(--border2);color:var(--text);}
 .prov-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow);}
-.prov-btn .prov-icon{font-size:14px;display:block;margin-bottom:3px;}
-.prov-btn .prov-name{display:block;}
-.prov-btn .prov-free{display:block;font-size:9px;color:var(--green);margin-top:1px;}
+.prov-btn .prov-icon{font-size:14px;display:block;margin-bottom:3px;pointer-events:none;}
+.prov-btn .prov-name{display:block;pointer-events:none;}
+.prov-btn .prov-free{display:block;font-size:9px;color:var(--green);margin-top:1px;pointer-events:none;}
 
 .key-row{display:flex;gap:6px;}
 .key-row input{flex:1;padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px;font-family:var(--mono);}
@@ -78,7 +78,7 @@ textarea#incident::placeholder{color:var(--text3);}
 .ex-btn:hover{background:var(--bg4);border-color:var(--border2);color:var(--text);}
 .ex-btn:hover::before{color:var(--accent);}
 
-#status-box{display:none;padding:0 16px 14px;}
+#status-box{padding:0 16px 14px;}
 .error-msg{padding:8px 11px;border-radius:var(--radius);background:rgba(255,68,85,0.1);color:#ff6b7a;font-size:12px;line-height:1.5;border:1px solid rgba(255,68,85,0.2);}
 .debug-msg{padding:8px 11px;border-radius:var(--radius);background:var(--bg3);color:var(--text2);font-size:11px;font-family:var(--mono);border:1px solid var(--border);white-space:pre-wrap;line-height:1.6;margin-top:6px;}
 
@@ -184,23 +184,23 @@ textarea#incident::placeholder{color:var(--text3);}
 
     <div class="ss">
       <label class="sl">AI Provider</label>
-      <div class="provider-grid">
-        <button class="prov-btn active" onclick="selectProvider('anthropic',this)">
+      <div class="provider-grid" id="provider-grid">
+        <button class="prov-btn active" data-provider="anthropic">
           <span class="prov-icon">🤖</span>
           <span class="prov-name">Anthropic</span>
           <span class="prov-free"></span>
         </button>
-        <button class="prov-btn" onclick="selectProvider('openai',this)">
+        <button class="prov-btn" data-provider="openai">
           <span class="prov-icon">⚡</span>
           <span class="prov-name">OpenAI</span>
           <span class="prov-free"></span>
         </button>
-        <button class="prov-btn" onclick="selectProvider('groq',this)">
+        <button class="prov-btn" data-provider="groq">
           <span class="prov-icon">🚀</span>
           <span class="prov-name">Groq</span>
           <span class="prov-free">FREE TIER</span>
         </button>
-        <button class="prov-btn" onclick="selectProvider('gemini',this)">
+        <button class="prov-btn" data-provider="gemini">
           <span class="prov-icon">✦</span>
           <span class="prov-name">Gemini</span>
           <span class="prov-free">FREE TIER</span>
@@ -299,6 +299,7 @@ const PROVIDERS={
 
 const TBG={"Initial Access":"rgba(55,138,221,0.12)","Execution":"rgba(255,170,0,0.1)","Persistence":"rgba(167,139,250,0.1)","Privilege Escalation":"rgba(255,68,85,0.1)","Defense Evasion":"rgba(236,72,153,0.1)","Credential Access":"rgba(255,170,0,0.1)","Discovery":"rgba(0,255,136,0.08)","Lateral Movement":"rgba(255,68,85,0.1)","Collection":"rgba(55,138,221,0.1)","Exfiltration":"rgba(255,68,85,0.1)","Command and Control":"rgba(167,139,250,0.1)","Impact":"rgba(255,68,85,0.12)"};
 const TCL={"Initial Access":"#7dd3fc","Execution":"#ffbb33","Persistence":"#a78bfa","Privilege Escalation":"#ff6b7a","Defense Evasion":"#f472b6","Credential Access":"#ffbb33","Discovery":"#00ff88","Lateral Movement":"#ff6b7a","Collection":"#7dd3fc","Exfiltration":"#ff6b7a","Command and Control":"#a78bfa","Impact":"#ff6b7a"};
+
 const SYS=`You are a senior SOC analyst with 15+ years of experience. Given a threat or incident description, output ONLY a JSON object — no markdown, no preamble, no trailing text. Be detailed and specific — this will be used by SOC analysts in production.
 
 {
@@ -351,170 +352,267 @@ Rules:
 - Max 5 MITRE techniques`;
 
 let PB=null,curProvider="anthropic";
-let apiKeys=JSON.parse(localStorage.getItem("soc_keys")||"{}");
+let apiKeys={};
 
-window.onload=function(){
-  const saved=localStorage.getItem("soc_provider")||"anthropic";
-  document.querySelectorAll(".prov-btn").forEach(b=>b.classList.remove("active"));
-  document.querySelectorAll(".prov-btn")[["anthropic","openai","groq","gemini"].indexOf(saved)]?.classList.add("active");
-  curProvider=saved;
-  updateProviderUI();
-  document.getElementById("incident").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))generate();});
-};
+// ── FIXED: safe JSON parse that doesn't corrupt the raw string ──────────────
+function safeParseJSON(raw) {
+  // Strip markdown code fences
+  let s = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
 
-function selectProvider(p,btn){
-  document.querySelectorAll(".prov-btn").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
-  curProvider=p;
-  localStorage.setItem("soc_provider",p);
-  updateProviderUI();
+  // Extract the outermost JSON object
+  const start = s.indexOf('{');
+  const end = s.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error("No JSON object found in response.");
+  s = s.slice(start, end + 1);
+
+  // Attempt 1: direct parse
+  try { return JSON.parse(s); } catch(e1) {}
+
+  // Attempt 2: fix unescaped newlines/tabs inside string values only
+  // Replace literal newlines that appear inside JSON strings
+  try {
+    const fixed = s.replace(/"(?:[^"\\]|\\.)*"/g, m =>
+      m.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
+    );
+    return JSON.parse(fixed);
+  } catch(e2) {}
+
+  // Attempt 3: remove trailing commas
+  try {
+    const fixed = s
+      .replace(/"(?:[^"\\]|\\.)*"/g, m =>
+        m.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
+      )
+      .replace(/,(\s*[}\]])/g, '$1');
+    return JSON.parse(fixed);
+  } catch(e3) {
+    throw new Error("Could not parse AI response as JSON. Please try again. Detail: " + e3.message);
+  }
 }
 
+window.onload = function(){
+  // Load saved keys
+  try { apiKeys = JSON.parse(localStorage.getItem("soc_keys") || "{}"); } catch(e) { apiKeys={}; }
+
+  // Load saved provider
+  const saved = localStorage.getItem("soc_provider") || "anthropic";
+  curProvider = saved;
+
+  // ── FIX: attach provider button clicks via JS, not inline onclick ──
+  document.getElementById("provider-grid").addEventListener("click", function(e){
+    const btn = e.target.closest(".prov-btn");
+    if (!btn) return;
+    const p = btn.dataset.provider;
+    if (!p) return;
+    document.querySelectorAll(".prov-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    curProvider = p;
+    localStorage.setItem("soc_provider", p);
+    updateProviderUI();
+  });
+
+  updateProviderUI();
+
+  document.getElementById("incident").addEventListener("keydown", e => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) generate();
+  });
+};
+
 function updateProviderUI(){
-  const p=PROVIDERS[curProvider];
-  document.getElementById("apikey-input").placeholder=p.placeholder;
-  document.getElementById("apikey-input").value=apiKeys[curProvider]||"";
-  document.getElementById("key-label").textContent=p.name+" API Key";
-  document.getElementById("key-link").href=p.link;
-  document.getElementById("key-link").textContent="→ "+p.linkText;
-  const hint=document.getElementById("key-hint");
-  if(apiKeys[curProvider]){hint.textContent="✓ Key saved · secured in local storage";hint.className="key-hint saved";}
-  else{hint.textContent="Saved locally · never sent anywhere else";hint.className="key-hint";}
+  const p = PROVIDERS[curProvider];
+  if (!p) return;
+  document.getElementById("apikey-input").placeholder = p.placeholder;
+  document.getElementById("apikey-input").value = apiKeys[curProvider] || "";
+  document.getElementById("key-label").textContent = p.name + " API Key";
+  document.getElementById("key-link").href = p.link;
+  document.getElementById("key-link").textContent = "→ " + p.linkText;
+  const hint = document.getElementById("key-hint");
+  if (apiKeys[curProvider]) {
+    hint.textContent = "✓ Key saved · secured in local storage";
+    hint.className = "key-hint saved";
+  } else {
+    hint.textContent = "Saved locally · never sent anywhere else";
+    hint.className = "key-hint";
+  }
 }
 
 function saveKey(){
-  const v=document.getElementById("apikey-input").value.trim();
-  if(!v)return;
-  apiKeys[curProvider]=v;
-  localStorage.setItem("soc_keys",JSON.stringify(apiKeys));
-  const hint=document.getElementById("key-hint");
-  hint.textContent="✓ Key saved · secured in local storage";
-  hint.className="key-hint saved";
+  const v = document.getElementById("apikey-input").value.trim();
+  if (!v) return;
+  apiKeys[curProvider] = v;
+  localStorage.setItem("soc_keys", JSON.stringify(apiKeys));
+  const hint = document.getElementById("key-hint");
+  hint.textContent = "✓ Key saved · secured in local storage";
+  hint.className = "key-hint saved";
 }
 
-function setEx(b){document.getElementById("incident").value=b.textContent.trim();}
-function clrStatus(){document.getElementById("status-box").style.display="none";document.getElementById("err").style.display="none";document.getElementById("dbg").style.display="none";}
-function showErr(m){document.getElementById("status-box").style.display="block";const e=document.getElementById("err");e.style.display="block";e.textContent=m;}
-function showDbg(l){document.getElementById("status-box").style.display="block";const d=document.getElementById("dbg");d.style.display="block";d.textContent=l.join("\n");}
+function setEx(b){ document.getElementById("incident").value = b.textContent.trim(); }
+function clrStatus(){ document.getElementById("err").style.display="none"; document.getElementById("dbg").style.display="none"; }
+function showErr(m){ const e=document.getElementById("err"); e.style.display="block"; e.textContent=m; }
+function showDbg(l){ const d=document.getElementById("dbg"); d.style.display="block"; d.textContent=l.join("\n"); }
 
 async function callAnthropic(key,inp){
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:PROVIDERS.anthropic.model,max_tokens:4000,system:SYS,messages:[{role:"user",content:inp}]})});
-  const data=await res.json();
-  if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
-  return data.content?.find(b=>b.type==="text")?.text||"";
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:PROVIDERS.anthropic.model,max_tokens:4000,system:SYS,messages:[{role:"user",content:inp}]})
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
+  return data.content?.find(b=>b.type==="text")?.text || "";
 }
 
 async function callOpenAI(key,inp){
-  const res=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:PROVIDERS.openai.model,max_tokens:4000,messages:[{role:"system",content:SYS},{role:"user",content:inp}]})});
-  const data=await res.json();
-  if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
-  return data.choices?.[0]?.message?.content||"";
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+    body:JSON.stringify({model:PROVIDERS.openai.model,max_tokens:4000,messages:[{role:"system",content:SYS},{role:"user",content:inp}]})
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
+  return data.choices?.[0]?.message?.content || "";
 }
 
 async function callGroq(key,inp){
-  const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},    body:JSON.stringify({model:PROVIDERS.groq.model,max_tokens:8000,messages:[{role:"system",content:SYS},{role:"user",content:inp}]})});
-  const data=await res.json();
-  if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
-  return data.choices?.[0]?.message?.content||"";
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+    body:JSON.stringify({model:PROVIDERS.groq.model,max_tokens:8000,messages:[{role:"system",content:SYS},{role:"user",content:inp}]})
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
+  return data.choices?.[0]?.message?.content || "";
 }
 
 async function callGemini(key,inp){
-  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${PROVIDERS.gemini.model}:generateContent?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:SYS+"\n\nIncident: "+inp}]}],generationConfig:{maxOutputTokens:4000}})});
-  const data=await res.json();
-  if(!res.ok)throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
-  return data.candidates?.[0]?.content?.parts?.[0]?.text||"";
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${PROVIDERS.gemini.model}:generateContent?key=${key}`, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({contents:[{parts:[{text:SYS+"\n\nIncident: "+inp}]}],generationConfig:{maxOutputTokens:4000}})
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(res.status+": "+(data?.error?.message||JSON.stringify(data)));
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
 async function generate(){
-  const inp=document.getElementById("incident").value.trim();
-  if(!inp)return;
-  const key=apiKeys[curProvider]||document.getElementById("apikey-input").value.trim();
-  if(!key){showErr("Please enter your "+PROVIDERS[curProvider].name+" API key above.");return;}
-  clrStatus();PB=null;
-  document.getElementById("empty-state").style.display="none";
-  document.getElementById("loading-state").style.display="flex";
-  document.getElementById("tabs").style.display="none";
-  document.getElementById("content").style.display="none";
-  document.getElementById("export-btn").style.display="none";
-  document.getElementById("active-card").style.display="none";
-  const btn=document.getElementById("generate-btn");
-  btn.disabled=true;btn.textContent="Analyzing...";
-  const log=[];
-  try{
-    log.push("Provider: "+PROVIDERS[curProvider].name);
-    log.push("Sending request...");
-    let raw="";
-    if(curProvider==="anthropic")raw=await callAnthropic(key,inp);
-    else if(curProvider==="openai")raw=await callOpenAI(key,inp);
-    else if(curProvider==="groq")raw=await callGroq(key,inp);
-    else if(curProvider==="gemini")raw=await callGemini(key,inp);
-    log.push("Response: "+raw.length+" chars");
-    raw=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-    const m=raw.match(/\{[\s\S]*\}/);
-    if(!m)throw new Error("No JSON found. Raw: "+raw.slice(0,300));
-    let js=m[0];
-    js=js.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
-    js=js.replace(/\n/g,'\\n').replace(/\r/g,'').replace(/\t/g,'\\t');
-    js=js.replace(/\\n(?=[^"]*(?:"[^"]*"[^"]*)*$)/g,' ');
-    js=js.replace(/,(\s*[}\]])/g,'$1');
-    try{
-      PB=JSON.parse(js);
-    }catch(e1){
-      log.push("First parse failed: "+e1.message+", trying repair...");
-      try{
-        const safe=js.replace(/"(?:[^"\\]|\\.)*"/g,s=>s.replace(/\n/g,' ').replace(/\t/g,' '));
-        PB=JSON.parse(safe);
-      }catch(e2){
-        log.push("Second parse failed: "+e2.message+", trying extract...");
-        const lastGood=js.lastIndexOf('"}');
-        if(lastGood>0){
-          let trimmed=js.slice(0,lastGood+2);
-          const opens=(trimmed.match(/\[/g)||[]).length;
-          const closes=(trimmed.match(/\]/g)||[]).length;
-          trimmed+=']'.repeat(Math.max(0,opens-closes))+'}}';
-          PB=JSON.parse(trimmed);
-        } else {
-          throw new Error("Could not parse response. Try again or rephrase the incident.");
-        }
-      }
-    }
-    renderPB();
-  }catch(e){
-    log.push("ERROR: "+e.message);
-    showDbg(log);showErr(e.message);
-    document.getElementById("loading-state").style.display="none";
-    document.getElementById("empty-state").style.display="flex";
+  const inp = document.getElementById("incident").value.trim();
+  if (!inp) return;
+
+  const key = apiKeys[curProvider] || document.getElementById("apikey-input").value.trim();
+  if (!key) {
+    showErr("Please enter your " + PROVIDERS[curProvider].name + " API key above.");
+    return;
   }
-  btn.disabled=false;btn.textContent="Generate Playbook ↗";
+
+  clrStatus();
+  PB = null;
+  document.getElementById("empty-state").style.display = "none";
+  document.getElementById("loading-state").style.display = "flex";
+  document.getElementById("tabs").style.display = "none";
+  document.getElementById("content").style.display = "none";
+  document.getElementById("export-btn").style.display = "none";
+  document.getElementById("active-card").style.display = "none";
+
+  const btn = document.getElementById("generate-btn");
+  btn.disabled = true;
+  btn.textContent = "Analyzing...";
+
+  const log = [];
+  try {
+    log.push("Provider: " + PROVIDERS[curProvider].name);
+    log.push("Sending request...");
+
+    let raw = "";
+    if (curProvider === "anthropic")     raw = await callAnthropic(key, inp);
+    else if (curProvider === "openai")   raw = await callOpenAI(key, inp);
+    else if (curProvider === "groq")     raw = await callGroq(key, inp);
+    else if (curProvider === "gemini")   raw = await callGemini(key, inp);
+
+    log.push("Response length: " + raw.length + " chars");
+
+    // ── FIXED: use the new safe parser ──────────────────────────────
+    PB = safeParseJSON(raw);
+
+    renderPB();
+  } catch(e) {
+    log.push("ERROR: " + e.message);
+    showDbg(log);
+    showErr(e.message);
+    document.getElementById("loading-state").style.display = "none";
+    document.getElementById("empty-state").style.display = "flex";
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Generate Playbook ↗";
 }
 
 function renderPB(){
-  document.getElementById("loading-state").style.display="none";
-  document.getElementById("tabs").style.display="flex";
-  document.getElementById("content").style.display="block";
-  document.getElementById("export-btn").style.display="block";
-  document.getElementById("ac-type").textContent=PB.threat_type||"";
-  document.getElementById("ac-sev").innerHTML=`<span class="badge sev-${PB.severity}">${PB.severity}</span>`;
-  document.getElementById("ac-summary").textContent=(PB.summary||"").slice(0,100)+"...";
-  document.getElementById("active-card").style.display="block";
+  document.getElementById("loading-state").style.display = "none";
+  document.getElementById("tabs").style.display = "flex";
+  document.getElementById("content").style.display = "block";
+  document.getElementById("export-btn").style.display = "block";
+  document.getElementById("ac-type").textContent = PB.threat_type || "";
+  document.getElementById("ac-sev").innerHTML = `<span class="badge sev-${PB.severity}">${PB.severity}</span>`;
+  document.getElementById("ac-summary").textContent = (PB.summary||"").slice(0,100)+"...";
+  document.getElementById("active-card").style.display = "block";
   document.querySelectorAll("#tabs button").forEach((t,i)=>t.classList.toggle("active",i===0));
   renderTab("summary");
 }
 
-function switchTab(tab,btn){document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");renderTab(tab);}
-function switchTabByName(tab){const names=["summary","playbook","detection","checklist","remediation","mitre"];const i=names.indexOf(tab);if(i>=0){document.querySelectorAll("#tabs button").forEach((t,j)=>t.classList.toggle("active",j===i));renderTab(tab);}}
-function renderTab(tab){const el=document.getElementById("content");const map={summary:rSum,playbook:rIR,detection:rDet,checklist:rChk,remediation:rRem,mitre:rMitre};el.innerHTML=(map[tab]||rSum)();if(tab==="checklist")attachChk();}
+function switchTab(tab,btn){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderTab(tab);
+}
+function switchTabByName(tab){
+  const names=["summary","playbook","detection","checklist","remediation","mitre"];
+  const i=names.indexOf(tab);
+  if(i>=0){
+    document.querySelectorAll("#tabs button").forEach((t,j)=>t.classList.toggle("active",j===i));
+    renderTab(tab);
+  }
+}
+function renderTab(tab){
+  const el=document.getElementById("content");
+  const map={summary:rSum,playbook:rIR,detection:rDet,checklist:rChk,remediation:rRem,mitre:rMitre};
+  el.innerHTML=(map[tab]||rSum)();
+  if(tab==="checklist")attachChk();
+}
 
 function rSum(){
   const pills=(PB.mitre||[]).map(t=>`<span class="tactic-pill" style="background:${TBG[t.tactic]||'rgba(255,255,255,0.04)'};color:${TCL[t.tactic]||'#94a3b8'};border-color:${TCL[t.tactic]||'#2a3f6a'}44" onclick="switchTabByName('mitre')">${t.tactic}</span>`).join("");
   return`<div class="meta-grid"><div class="meta-card"><div class="mc-label">Severity</div><span class="badge sev-${PB.severity}">${PB.severity}</span></div><div class="meta-card"><div class="mc-label">Threat type</div><div class="mc-val">${PB.threat_type}</div></div><div class="meta-card"><div class="mc-label">MITRE tactics</div><div class="mc-val" style="color:var(--accent)">${(PB.mitre||[]).length} mapped</div></div><div class="meta-card"><div class="mc-label">IR phases</div><div class="mc-val" style="color:var(--green)">${(PB.playbook||[]).length} phases</div></div></div><div class="summary-text">${PB.summary}</div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">ATT&CK tactics detected</div><div class="tactic-pills">${pills}</div>`;
 }
-function rIR(){return(PB.playbook||[]).map((ph,i)=>`<div class="card"><div class="card-header"><span class="phase-num">${i+1}</span>${ph.phase}</div><div class="card-body">${(ph.steps||[]).map((s,j)=>`<div style="display:flex;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.6"><span class="step-num">${String(j+1).padStart(2,"0")}</span><span style="color:var(--text2)">${s}</span></div>`).join("")}</div></div>`).join("");}
-function rDet(){return[{k:"siem_rules",l:"SIEM Rules",m:true},{k:"soar_actions",l:"SOAR Actions",m:false},{k:"iocs",l:"Indicators of Compromise",m:true}].map(({k,l,m})=>`<div class="card"><div class="card-header">${l}</div><div class="card-body">${(PB.detection?.[k]||[]).map(i=>m?`<div class="mono-item">${i}</div>`:`<div class="plain-item"><span class="arrow">›</span>${i}</div>`).join("")}</div></div>`).join("");}
-function rChk(){return(PB.checklist||[]).map((cat,ci)=>`<div class="card"><div class="card-header">${cat.category}<span class="count" id="cnt-${ci}">0/${(cat.items||[]).length} done</span></div><div class="card-body">${(cat.items||[]).map((item,ii)=>`<div class="check-row" data-ci="${ci}" data-ii="${ii}"><div class="check-box" id="cb-${ci}-${ii}"></div><span class="check-label" id="cl-${ci}-${ii}">${item}</span></div>`).join("")}</div></div>`).join("");}
-function attachChk(){document.querySelectorAll(".check-row").forEach(row=>{row.addEventListener("click",()=>{const ci=row.dataset.ci,ii=row.dataset.ii;const box=document.getElementById(`cb-${ci}-${ii}`);const lbl=document.getElementById(`cl-${ci}-${ii}`);const chk=box.classList.toggle("checked");lbl.classList.toggle("done",chk);box.innerHTML=chk?`<svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#0a0e1a" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`:"";const done=document.querySelectorAll(`[data-ci="${ci}"] .check-box.checked`).length;document.getElementById(`cnt-${ci}`).textContent=`${done}/${PB.checklist[ci].items.length} done`;});});}
-function rRem(){return(PB.remediation||[]).map(r=>`<div class="rem-row"><div class="rem-num">${r.step}</div><div><div><span class="rem-title">${r.title}</span><span class="badge pri-${r.priority}">${r.priority}</span></div><div class="rem-action">${r.action}</div></div></div>`).join("");}
-function rMitre(){return`<div style="font-size:12px;color:var(--text3);margin-bottom:14px">Techniques mapped to the MITRE ATT&CK framework based on the incident</div>`+(PB.mitre||[]).map(t=>`<div class="mitre-card"><div class="mitre-header" style="background:${TBG[t.tactic]||'rgba(255,255,255,0.02)'}"><a class="mitre-id" href="https://attack.mitre.org/techniques/${t.technique_id}" target="_blank">${t.technique_id}</a><span class="mitre-name">${t.technique_name}</span><span class="mitre-tactic" style="color:${TCL[t.tactic]||'#94a3b8'}">${t.tactic}</span></div><div class="mitre-body"><div class="mitre-desc">${t.description}</div>${(t.mitigations||[]).length?`<div class="mit-label">Mitigations</div>${t.mitigations.map(m=>`<div class="mit-row"><span class="arrow">›</span>${m}</div>`).join("")}`:""}</div></div>`).join("");}
+function rIR(){
+  return(PB.playbook||[]).map((ph,i)=>`<div class="card"><div class="card-header"><span class="phase-num">${i+1}</span>${ph.phase}</div><div class="card-body">${(ph.steps||[]).map((s,j)=>`<div style="display:flex;gap:10px;margin-bottom:10px;font-size:13px;line-height:1.6"><span class="step-num">${String(j+1).padStart(2,"0")}</span><span style="color:var(--text2)">${s}</span></div>`).join("")}</div></div>`).join("");
+}
+function rDet(){
+  return[{k:"siem_rules",l:"SIEM Rules",m:true},{k:"soar_actions",l:"SOAR Actions",m:false},{k:"iocs",l:"Indicators of Compromise",m:true}].map(({k,l,m})=>`<div class="card"><div class="card-header">${l}</div><div class="card-body">${(PB.detection?.[k]||[]).map(i=>m?`<div class="mono-item">${i}</div>`:`<div class="plain-item"><span class="arrow">›</span>${i}</div>`).join("")}</div></div>`).join("");
+}
+function rChk(){
+  return(PB.checklist||[]).map((cat,ci)=>`<div class="card"><div class="card-header">${cat.category}<span class="count" id="cnt-${ci}">0/${(cat.items||[]).length} done</span></div><div class="card-body">${(cat.items||[]).map((item,ii)=>`<div class="check-row" data-ci="${ci}" data-ii="${ii}"><div class="check-box" id="cb-${ci}-${ii}"></div><span class="check-label" id="cl-${ci}-${ii}">${item}</span></div>`).join("")}</div></div>`).join("");
+}
+function attachChk(){
+  document.querySelectorAll(".check-row").forEach(row=>{
+    row.addEventListener("click",()=>{
+      const ci=row.dataset.ci,ii=row.dataset.ii;
+      const box=document.getElementById(`cb-${ci}-${ii}`);
+      const lbl=document.getElementById(`cl-${ci}-${ii}`);
+      const chk=box.classList.toggle("checked");
+      lbl.classList.toggle("done",chk);
+      box.innerHTML=chk?`<svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#0a0e1a" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`:"";
+      const done=document.querySelectorAll(`[data-ci="${ci}"] .check-box.checked`).length;
+      document.getElementById(`cnt-${ci}`).textContent=`${done}/${PB.checklist[ci].items.length} done`;
+    });
+  });
+}
+function rRem(){
+  return(PB.remediation||[]).map(r=>`<div class="rem-row"><div class="rem-num">${r.step}</div><div><div><span class="rem-title">${r.title}</span><span class="badge pri-${r.priority}">${r.priority}</span></div><div class="rem-action">${r.action}</div></div></div>`).join("");
+}
+function rMitre(){
+  return`<div style="font-size:12px;color:var(--text3);margin-bottom:14px">Techniques mapped to the MITRE ATT&CK framework based on the incident</div>`+(PB.mitre||[]).map(t=>`<div class="mitre-card"><div class="mitre-header" style="background:${TBG[t.tactic]||'rgba(255,255,255,0.02)'}"><a class="mitre-id" href="https://attack.mitre.org/techniques/${t.technique_id}" target="_blank">${t.technique_id}</a><span class="mitre-name">${t.technique_name}</span><span class="mitre-tactic" style="color:${TCL[t.tactic]||'#94a3b8'}">${t.tactic}</span></div><div class="mitre-body"><div class="mitre-desc">${t.description}</div>${(t.mitigations||[]).length?`<div class="mit-label">Mitigations</div>${t.mitigations.map(m=>`<div class="mit-row"><span class="arrow">›</span>${m}</div>`).join("")}`:""}</div></div>`).join("");
+}
 
 function exportPDF(){
   if(!PB)return;
